@@ -1,0 +1,27 @@
+{
+    "name": "seeding-realtime-state",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@types/node": "^25.3.0",
+        "prisma": "^6.19.2",
+        "typescript": "^5.9.3"
+    },
+    "dependencies": {
+        "@nestjs/common": "^11.1.14",
+        "@nestjs/core": "^11.1.14",
+        "@prisma/client": "^6.19.2",
+        "exceljs": "^4.4.0",
+        "ioredis": "^5.9.3",
+        "jspdf": "^4.2.0",
+        "reflect-metadata": "^0.2.2",
+        "rxjs": "^7.8.2"
+    }
+}

@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  VENDOR
+  ADMIN
+}
+
+enum ServiceType {
+  HOT_DESK
+  PRIVATE_OFFICE
+  MEETING_ROOM
+}
+
+enum BranchStatus {
+  CALM
+  MODERATE
+  BUSY
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String?
+  role          Role      @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Vendor relations
+  branches      Branch[]  @relation("VendorBranches")
+  
+  // Customer relations
+  bookings      Booking[]
+}
+
+model Branch {
+  id            String       @id @default(cuid())
+  name          String
+  city          String       // Amman, Irbid, Aqaba
+  address       String
+  status        BranchStatus @default(CALM)
+  
+  vendorId      String
+  vendor        User         @relation("VendorBranches", fields: [vendorId], references: [id])
+  
+  services      Service[]
+  bookings      Booking[]
+  approvals     ApprovalRequest[]
+  
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Service {
+  id            String      @id @default(cuid())
+  type          ServiceType
+  name          String      // e.g. "Meeting Room A", "Desk 12"
+  description   String?
+  
+  hourlyRate    Float
+  dailyRate     Float
+  weeklyRate    Float
+  
+  branchId      String
+  branch        Branch      @relation(fields: [branchId], references: [id])
+  
+  bookings      Booking[]
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  startTime     DateTime
+  endTime       DateTime
+  totalPrice    Float
+  status        BookingStatus @default(PENDING)
+  
+  customerId    String
+  customer      User          @relation(fields: [customerId], references: [id])
+  
+  branchId      String
+  branch        Branch        @relation(fields: [branchId], references: [id])
+  
+  serviceId     String
+  service       Service       @relation(fields: [serviceId], references: [id])
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model ApprovalRequest {
+  id            String         @id @default(cuid())
+  type          String         // e.g. "NEW_BRANCH", "CAPACITY_CHANGE"
+  details       Json           // Stores the requested changes
+  status        ApprovalStatus @default(PENDING)
+  reason        String?        // Admin rejection reason
+  
+  branchId      String?
+  branch        Branch?        @relation(fields: [branchId], references: [id])
+  
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}

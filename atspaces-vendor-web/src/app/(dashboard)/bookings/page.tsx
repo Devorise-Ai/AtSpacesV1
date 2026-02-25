@@ -100,102 +100,181 @@ export default function BookingsPage() {
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="rounded-md border bg-card overflow-hidden">
-                <Table>
-                    <TableHeader className="bg-muted/50">
-                        <TableRow>
-                            <TableHead className="w-[100px]">ID</TableHead>
-                            <TableHead>Customer</TableHead>
-                            <TableHead>Service</TableHead>
-                            <TableHead>Date / Time</TableHead>
-                            <TableHead>Payment</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredBookings.length === 0 ? (
+            {/* Desktop Table / Mobile Card View */}
+            <div className="rounded-xl overflow-hidden">
+                {/* Desktop View */}
+                <div className="hidden md:block rounded-xl border glass-card overflow-hidden">
+                    <Table>
+                        <TableHeader className="bg-muted/50">
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center h-32 text-muted-foreground">
-                                    No bookings match your filters.
-                                </TableCell>
+                                <TableHead className="w-[100px]">ID</TableHead>
+                                <TableHead>Customer</TableHead>
+                                <TableHead>Service</TableHead>
+                                <TableHead>Date / Time</TableHead>
+                                <TableHead>Payment</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
-                        ) : (
-                            filteredBookings.map((booking) => (
-                                <TableRow key={booking.id} className="group hover:bg-muted/30">
-                                    <TableCell className="font-medium text-foreground">{booking.id}</TableCell>
-                                    <TableCell className="font-medium">{booking.customer}</TableCell>
-                                    <TableCell className="text-muted-foreground">{booking.service}</TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col">
-                                            <span className="font-medium">{booking.date}</span>
-                                            <span className="text-xs text-muted-foreground">{booking.time}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        {booking.paid ? (
-                                            <span className="text-green-500 font-medium text-xs border border-green-500/30 bg-green-500/10 px-2 py-1 rounded-full">Paid</span>
-                                        ) : (
-                                            <span className="text-amber-500 font-medium text-xs border border-amber-500/30 bg-amber-500/10 px-2 py-1 rounded-full">Pending</span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {getStatusBadge(booking.status)}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2 transition-opacity">
-                                            {booking.status === "Upcoming" && (
-                                                <>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-8 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-colors"
-                                                        onClick={() => handleStatusChange(booking.id, "Checked-In")}
-                                                    >
-                                                        <CheckCircle2 className="size-4 mr-1" />
-                                                        Check In
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-8 border-destructive text-destructive hover:bg-destructive hover:text-white transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                                                        onClick={() => {
-                                                            if (confirm(`Mark ${booking.customer} as No-Show for ${booking.id}?`)) {
-                                                                handleStatusChange(booking.id, "No-Show")
-                                                            }
-                                                        }}
-                                                    >
-                                                        <XCircle className="size-4 mr-1" />
-                                                        No Show
-                                                    </Button>
-                                                </>
-                                            )}
-
-                                            {booking.status === "Checked-In" && (
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="h-8 text-muted-foreground hover:text-foreground"
-                                                    onClick={() => handleStatusChange(booking.id, "Completed")}
-                                                >
-                                                    Mark Completed
-                                                </Button>
-                                            )}
-
-                                            {/* For edge cases/mistakes */}
-                                            {(booking.status === "Completed" || booking.status === "No-Show") && (
-                                                <Button size="sm" variant="ghost" className="h-8 text-muted-foreground opacity-0 group-hover:opacity-100">
-                                                    View Details
-                                                </Button>
-                                            )}
-                                        </div>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredBookings.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center h-32 text-muted-foreground">
+                                        No bookings match your filters.
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                            ) : (
+                                filteredBookings.map((booking) => (
+                                    <TableRow key={booking.id} className="group hover:bg-muted/30">
+                                        <TableCell className="font-medium text-foreground">{booking.id}</TableCell>
+                                        <TableCell className="font-medium">{booking.customer}</TableCell>
+                                        <TableCell className="text-muted-foreground">{booking.service}</TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span className="font-medium">{booking.date}</span>
+                                                <span className="text-xs text-muted-foreground">{booking.time}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {booking.paid ? (
+                                                <span className="text-green-500 font-medium text-xs border border-green-500/30 bg-green-500/10 px-2 py-1 rounded-full">Paid</span>
+                                            ) : (
+                                                <span className="text-amber-500 font-medium text-xs border border-amber-500/30 bg-amber-500/10 px-2 py-1 rounded-full">Pending</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {getStatusBadge(booking.status)}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2 transition-opacity">
+                                                {booking.status === "Upcoming" && (
+                                                    <>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-8 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-colors"
+                                                            onClick={() => handleStatusChange(booking.id, "Checked-In")}
+                                                        >
+                                                            <CheckCircle2 className="size-4 mr-1" />
+                                                            Check In
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-8 border-destructive text-destructive hover:bg-destructive hover:text-white transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                                            onClick={() => {
+                                                                if (confirm(`Mark ${booking.customer} as No-Show for ${booking.id}?`)) {
+                                                                    handleStatusChange(booking.id, "No-Show")
+                                                                }
+                                                            }}
+                                                        >
+                                                            <XCircle className="size-4 mr-1" />
+                                                            No Show
+                                                        </Button>
+                                                    </>
+                                                )}
+
+                                                {booking.status === "Checked-In" && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="h-8 text-muted-foreground hover:text-foreground"
+                                                        onClick={() => handleStatusChange(booking.id, "Completed")}
+                                                    >
+                                                        Mark Completed
+                                                    </Button>
+                                                )}
+
+                                                {/* For edge cases/mistakes */}
+                                                {(booking.status === "Completed" || booking.status === "No-Show") && (
+                                                    <Button size="sm" variant="ghost" className="h-8 text-muted-foreground opacity-0 group-hover:opacity-100">
+                                                        View Details
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {/* Mobile View */}
+                <div className="md:hidden space-y-4">
+                    {filteredBookings.length === 0 ? (
+                        <div className="text-center py-10 glass-card rounded-xl border border-white/5 text-muted-foreground text-sm">
+                            No bookings match your filters.
+                        </div>
+                    ) : (
+                        filteredBookings.map((booking) => (
+                            <div key={booking.id} className="glass-card rounded-2xl border border-white/10 p-5 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="flex justify-between items-start">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-primary/70">{booking.id}</p>
+                                        <h3 className="text-lg font-bold font-outfit text-foreground">{booking.customer}</h3>
+                                        <p className="text-sm text-muted-foreground">{booking.service}</p>
+                                    </div>
+                                    {getStatusBadge(booking.status)}
+                                </div>
+
+                                <div className="flex items-center justify-between py-3 border-y border-white/5">
+                                    <div className="space-y-0.5">
+                                        <p className="text-[10px] uppercase font-bold text-muted-foreground">Date / Time</p>
+                                        <p className="text-sm font-medium text-foreground">{booking.date} · {booking.time}</p>
+                                    </div>
+                                    <div className="text-right space-y-0.5">
+                                        <p className="text-[10px] uppercase font-bold text-muted-foreground">Payment</p>
+                                        {booking.paid ? (
+                                            <span className="text-green-500 font-bold text-xs">Paid</span>
+                                        ) : (
+                                            <span className="text-amber-500 font-bold text-xs">Pending</span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    {booking.status === "Upcoming" && (
+                                        <>
+                                            <Button
+                                                className="flex-1 h-11 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl"
+                                                onClick={() => handleStatusChange(booking.id, "Checked-In")}
+                                            >
+                                                Check In
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                className="h-11 px-4 border-destructive text-destructive hover:bg-destructive/10 rounded-xl"
+                                                onClick={() => {
+                                                    if (confirm(`Mark ${booking.customer} as No-Show for ${booking.id}?`)) {
+                                                        handleStatusChange(booking.id, "No-Show")
+                                                    }
+                                                }}
+                                            >
+                                                <XCircle className="size-5" />
+                                            </Button>
+                                        </>
+                                    )}
+
+                                    {booking.status === "Checked-In" && (
+                                        <Button
+                                            className="flex-1 h-11 bg-primary text-white font-bold rounded-xl"
+                                            onClick={() => handleStatusChange(booking.id, "Completed")}
+                                        >
+                                            Mark Completed
+                                        </Button>
+                                    )}
+
+                                    {(booking.status === "Completed" || booking.status === "No-Show") && (
+                                        <Button variant="outline" className="flex-1 h-11 border-white/10 rounded-xl text-sm font-semibold">
+                                            View Details
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     );

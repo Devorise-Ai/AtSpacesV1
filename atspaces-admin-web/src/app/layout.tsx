@@ -3,8 +3,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
 
 export const metadata: Metadata = {
-  title: "AtSpaces Vendor Portal",
-  description: "Manage your workspace branch — capacity, bookings, and analytics.",
+  title: "AtSpaces Admin Portal",
+  description: "Strategic command center for the AtSpaces network — manage branches, vendors, pricing, and analytics.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

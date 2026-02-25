@@ -88,7 +88,7 @@
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
 }
 
-/* ── DARK MODE — via Tailwind .dark class ─────────────────────────────── */
+/* ── DARK MODE ────────────────────────────────────────────────────────── */
 .dark,
 :root[data-theme="dark"] {
   --background: oklch(0.14 0.03 260);
@@ -129,7 +129,6 @@
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-/* ── LIGHT MODE via data-theme attribute (matches customer web pattern) ── */
 :root[data-theme="light"] {
   --background: oklch(0.97 0 0);
   --foreground: oklch(0.145 0 0);
@@ -183,7 +182,6 @@
     font-family: 'Outfit', sans-serif;
   }
 
-  /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 10px;
   }

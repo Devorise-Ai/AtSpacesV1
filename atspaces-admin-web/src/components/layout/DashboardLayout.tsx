@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
@@ -12,14 +12,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
     const handleLogout = () => {
-        router.push("/vendor/login");
+        router.push("/admin/login");
     };
 
     return (
         <div className="flex min-h-screen bg-background text-foreground transition-all duration-500">
-            {/* Mobile Header Elements */}
+            {/* Mobile Header */}
             <div className="fixed top-6 left-6 right-6 z-40 flex items-center justify-between md:hidden pointer-events-none">
-                {/* Burger Menu Button */}
                 <Button
                     variant="ghost"
                     size="icon"
@@ -28,8 +27,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 >
                     <Menu className="size-6" />
                 </Button>
-
-                {/* Mobile Sign Out Button */}
                 <Button
                     variant="ghost"
                     size="icon"
@@ -40,7 +37,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 </Button>
             </div>
 
-            {/* Unified Floating Sidebar / Mobile Drawer */}
             <Sidebar
                 isExpanded={isExpanded}
                 onToggle={() => setIsExpanded(!isExpanded)}
@@ -48,7 +44,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 setMobileOpen={setIsMobileSidebarOpen}
             />
 
-            {/* Main Content Area */}
             <main className={`flex-1 p-5 lg:p-8 transition-all duration-500 [transition-timing-function:cubic-bezier(0.4,0,0.2,1)] 
                 pb-24 md:pb-8
                 ${isExpanded ? "md:ml-72" : "md:ml-24"}`}>

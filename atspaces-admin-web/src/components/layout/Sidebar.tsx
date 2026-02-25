@@ -4,27 +4,32 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
     Home,
+    TrendingUp,
+    Building2,
+    Users,
+    DollarSign,
+    CheckSquare,
+    FileText,
     Settings,
-    ClipboardList,
-    BarChart2,
-    UserCircle,
     LogOut,
     Bell,
     Moon,
     Sun,
     LayoutGrid,
     ChevronRight,
-    ChevronLeft,
     X
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
 const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
-    { name: "Capacity", href: "/capacity", icon: Settings },
-    { name: "Bookings", href: "/bookings", icon: ClipboardList },
-    { name: "Reports", href: "/reports", icon: BarChart2 },
-    { name: "Profile", href: "/profile", icon: UserCircle },
+    { name: "Analytics", href: "/analytics", icon: TrendingUp },
+    { name: "Branches", href: "/branches", icon: Building2 },
+    { name: "Vendors", href: "/vendors", icon: Users },
+    { name: "Pricing", href: "/pricing", icon: DollarSign },
+    { name: "Approvals", href: "/approvals", icon: CheckSquare },
+    { name: "Applications", href: "/applications", icon: FileText },
+    { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 interface SidebarProps {
@@ -40,7 +45,7 @@ export function Sidebar({ isExpanded, onToggle, isMobileOpen, setMobileOpen }: S
     const { theme, toggleTheme } = useTheme();
 
     const handleLogout = () => {
-        router.push("/vendor/login");
+        router.push("/admin/login");
         if (setMobileOpen) setMobileOpen(false);
     };
 
@@ -70,7 +75,7 @@ export function Sidebar({ isExpanded, onToggle, isMobileOpen, setMobileOpen }: S
                             </div>
                             <div className="flex flex-col">
                                 <span className="font-outfit font-bold text-lg leading-none">AtSpaces</span>
-                                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-0.5">Vendor Hub</span>
+                                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-0.5">Admin</span>
                             </div>
                         </div>
                         <button
@@ -82,7 +87,7 @@ export function Sidebar({ isExpanded, onToggle, isMobileOpen, setMobileOpen }: S
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex flex-col gap-4 flex-1">
+                    <nav className="flex flex-col gap-2 flex-1">
                         {navigation.map((item) => {
                             const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                             return (
@@ -90,7 +95,7 @@ export function Sidebar({ isExpanded, onToggle, isMobileOpen, setMobileOpen }: S
                                     key={item.name}
                                     href={item.href}
                                     onClick={() => setMobileOpen?.(false)}
-                                    className={`flex items-center gap-4 px-4 h-12 rounded-xl transition-all font-outfit font-semibold ${isActive
+                                    className={`flex items-center gap-4 px-4 h-11 rounded-xl transition-all font-outfit font-semibold text-sm ${isActive
                                         ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                                         : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
                                         }`}
@@ -100,33 +105,13 @@ export function Sidebar({ isExpanded, onToggle, isMobileOpen, setMobileOpen }: S
                                 </Link>
                             );
                         })}
-                        <Link
-                            href="/notifications"
-                            onClick={() => setMobileOpen?.(false)}
-                            className={`flex items-center gap-4 px-4 h-12 rounded-xl transition-all font-outfit font-semibold ${pathname === "/notifications"
-                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                                : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                                }`}
-                        >
-                            <div className="relative">
-                                <Bell className="size-5" />
-                                <span className="absolute -top-0.5 -right-0.5 flex size-1.5">
-                                    <span className="animate-ping absolute inline-flex size-full rounded-full bg-primary opacity-60" />
-                                    <span className="relative inline-flex size-1.5 rounded-full bg-primary" />
-                                </span>
-                            </div>
-                            <span>Notifications</span>
-                        </Link>
                     </nav>
 
                     {/* Bottom Actions */}
-                    <div className="flex flex-col gap-4 pt-6 border-t border-white/5">
+                    <div className="flex flex-col gap-3 pt-6 border-t border-white/5">
                         <button
-                            onClick={() => {
-                                toggleTheme();
-                                // Keep menu open for immediate visual feedback
-                            }}
-                            className="flex items-center gap-4 px-4 h-12 rounded-xl text-muted-foreground hover:bg-muted transition-all font-outfit font-semibold"
+                            onClick={toggleTheme}
+                            className="flex items-center gap-4 px-4 h-11 rounded-xl text-muted-foreground hover:bg-muted transition-all font-outfit font-semibold text-sm"
                         >
                             <div className="relative size-5 shrink-0 flex items-center justify-center">
                                 <Sun className={`absolute size-5 transition-all duration-500 ${theme === "dark" ? "translate-y-0 opacity-100 rotate-0" : "translate-y-10 opacity-0 -rotate-90"}`} />
@@ -136,7 +121,7 @@ export function Sidebar({ isExpanded, onToggle, isMobileOpen, setMobileOpen }: S
                         </button>
                         <button
                             onClick={handleLogout}
-                            className="flex items-center gap-4 px-4 h-12 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all font-outfit font-semibold"
+                            className="flex items-center gap-4 px-4 h-11 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all font-outfit font-semibold text-sm"
                         >
                             <LogOut className="size-5" />
                             <span>Sign Out</span>
@@ -150,11 +135,10 @@ export function Sidebar({ isExpanded, onToggle, isMobileOpen, setMobileOpen }: S
                 className={`fixed left-4 top-4 bottom-4 z-50 hidden md:flex flex-col py-6 glass-card border-white/10 shadow-2xl rounded-[1.8rem] transition-all duration-500 [transition-timing-function:cubic-bezier(0.4,0,0.2,1)] ${isExpanded ? "w-64 px-4" : "w-16 items-center"
                     }`}
             >
-                {/* ... (existing sidebar content) ... */}
-                {/* Logo Section / Toggle Trigger */}
+                {/* Logo / Toggle */}
                 <button
                     onClick={onToggle}
-                    className={`mb-8 group relative outline-none flex items-center transition-all duration-500 [transition-timing-function:cubic-bezier(0.4,0,0.2,1)] ${isExpanded ? "w-full px-2" : "justify-center"}`}
+                    className={`mb-6 group relative outline-none flex items-center transition-all duration-500 [transition-timing-function:cubic-bezier(0.4,0,0.2,1)] ${isExpanded ? "w-full px-2" : "justify-center"}`}
                 >
                     <div className={`flex aspect-square size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-all duration-300 ${isExpanded ? "scale-90" : "group-hover:scale-105"}`}>
                         <LayoutGrid className="size-5" />
@@ -162,7 +146,7 @@ export function Sidebar({ isExpanded, onToggle, isMobileOpen, setMobileOpen }: S
                     {isExpanded && (
                         <div className="ml-3 flex flex-col items-start animate-in fade-in slide-in-from-left-2 duration-500">
                             <span className="font-outfit font-bold text-lg leading-none">AtSpaces</span>
-                            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-0.5">Vendor Hub</span>
+                            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-0.5">Admin</span>
                         </div>
                     )}
                     {!isExpanded && (
@@ -172,15 +156,15 @@ export function Sidebar({ isExpanded, onToggle, isMobileOpen, setMobileOpen }: S
                     )}
                 </button>
 
-                {/* Navigation Section */}
-                <nav className={`flex flex-1 flex-col gap-3 ${isExpanded ? "w-full" : ""}`}>
+                {/* Navigation */}
+                <nav className={`flex flex-1 flex-col gap-2 ${isExpanded ? "w-full" : ""}`}>
                     {navigation.map((item) => {
                         const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                         return (
                             <Link
                                 key={item.name}
                                 href={item.href}
-                                className={`group relative flex items-center rounded-xl transition-all duration-200 outline-none ${isExpanded ? "w-full px-3 h-11" : "size-10 justify-center"
+                                className={`group relative flex items-center rounded-xl transition-all duration-200 outline-none ${isExpanded ? "w-full px-3 h-10" : "size-10 justify-center"
                                     } ${isActive
                                         ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                                         : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
@@ -201,12 +185,12 @@ export function Sidebar({ isExpanded, onToggle, isMobileOpen, setMobileOpen }: S
                     })}
                 </nav>
 
-                {/* Bottom Actions Section */}
-                <div className={`flex flex-col gap-3 mt-auto ${isExpanded ? "w-full" : "items-center"}`}>
+                {/* Bottom Actions */}
+                <div className={`flex flex-col gap-2 mt-auto ${isExpanded ? "w-full" : "items-center"}`}>
                     {/* Notifications */}
                     <Link
                         href="/notifications"
-                        className={`group relative flex items-center rounded-xl transition-all duration-200 outline-none ${isExpanded ? "w-full px-3 h-11" : "size-10 justify-center"
+                        className={`group relative flex items-center rounded-xl transition-all duration-200 outline-none ${isExpanded ? "w-full px-3 h-10" : "size-10 justify-center"
                             } ${pathname === "/notifications"
                                 ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                                 : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
@@ -233,7 +217,7 @@ export function Sidebar({ isExpanded, onToggle, isMobileOpen, setMobileOpen }: S
                     {/* Theme Toggle */}
                     <button
                         onClick={toggleTheme}
-                        className={`group relative flex items-center rounded-xl text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all duration-200 overflow-hidden outline-none ${isExpanded ? "w-full px-3 h-11" : "size-10 justify-center"
+                        className={`group relative flex items-center rounded-xl text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all duration-200 overflow-hidden outline-none ${isExpanded ? "w-full px-3 h-10" : "size-10 justify-center"
                             }`}
                     >
                         <div className="relative size-5 shrink-0 flex items-center justify-center">
@@ -256,7 +240,7 @@ export function Sidebar({ isExpanded, onToggle, isMobileOpen, setMobileOpen }: S
                     {/* Logout */}
                     <button
                         onClick={handleLogout}
-                        className={`group relative flex items-center rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200 outline-none ${isExpanded ? "w-full px-3 h-11" : "size-10 justify-center"
+                        className={`group relative flex items-center rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200 outline-none ${isExpanded ? "w-full px-3 h-10" : "size-10 justify-center"
                             }`}
                     >
                         <LogOut className="size-5 shrink-0" />
@@ -272,15 +256,15 @@ export function Sidebar({ isExpanded, onToggle, isMobileOpen, setMobileOpen }: S
                     </button>
                 </div>
 
-                {/* Collapse Icon Toggle */}
+                {/* Collapse Toggle */}
                 <div className={`absolute -right-3 top-1/2 -translate-y-1/2 size-6 rounded-full glass-card border-white/10 items-center justify-center text-muted-foreground group cursor-pointer hover:text-primary transition-all hidden md:flex ${isExpanded ? "rotate-180" : ""}`} onClick={onToggle}>
                     <ChevronRight className="size-3.5" />
                 </div>
             </aside>
 
             {/* ── Mobile Bottom Navigation ── */}
-            <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex md:hidden items-center gap-1 p-1.5 glass-card border-white/10 shadow-2xl rounded-2xl w-[90%] max-w-sm justify-around">
-                {navigation.map((item) => {
+            <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex md:hidden items-center gap-1 p-1.5 glass-card border-white/10 shadow-2xl rounded-2xl w-[92%] max-w-md justify-around">
+                {navigation.slice(0, 5).map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                     return (
                         <Link
@@ -296,13 +280,13 @@ export function Sidebar({ isExpanded, onToggle, isMobileOpen, setMobileOpen }: S
                     );
                 })}
                 <Link
-                    href="/notifications"
-                    className={`relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 size-11 ${pathname === "/notifications"
+                    href="/approvals"
+                    className={`relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 size-11 ${pathname === "/approvals"
                         ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                         : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
                         }`}
                 >
-                    <Bell className="size-5" />
+                    <CheckSquare className="size-5" />
                     <span className="absolute top-2.5 right-2.5 flex size-1.5">
                         <span className="animate-ping absolute inline-flex size-full rounded-full bg-primary opacity-60" />
                         <span className="relative inline-flex size-1.5 rounded-full bg-primary" />

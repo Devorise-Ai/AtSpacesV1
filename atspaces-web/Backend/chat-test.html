@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AtSpaces AI Agent Test</title>
+    <!-- Include Socket.IO client -->
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7f9;
+        }
+
+        .chat-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: 85vh;
+        }
+
+        .header {
+            background: #2563eb;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .status {
+            font-size: 0.8rem;
+            color: #a5b4fc;
+            margin-top: 5px;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            max-width: 85%;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .user-message {
+            background: #2563eb;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+
+        .agent-message {
+            background: #f1f5f9;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+        }
+
+        .input-area {
+            display: flex;
+            padding: 15px;
+            background: #fff;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        input[type="text"]:focus {
+            border-color: #2563eb;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0 20px;
+            margin-left: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background: transparent;
+            padding: 0 10px;
+            color: #64748b;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="chat-container">
+        <div class="header">
+            <h2>AtSpaces AI Assistant</h2>
+            <div class="status" id="statusIndicator">🔴 Disconnected</div>
+        </div>
+        <div class="messages" id="messagesContainer">
+            <!-- Messages go here -->
+        </div>
+        <div class="typing-indicator" id="typingIndicator">Agent is typing...</div>
+        <form class="input-area" id="chatForm">
+            <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off" required>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+    <script>
+        const socket = io('http://localhost:3001');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        let currentAgentMessageDiv = null;
+
+        // Connection Events
+        socket.on('connect', () => {
+            statusIndicator.innerHTML = `🟢 Connected | ID: ${socket.id.substring(0, 6)}...`;
+            statusIndicator.style.color = '#86efac';
+        });
+
+        socket.on('disconnect', () => {
+            statusIndicator.innerHTML = '🔴 Disconnected';
+            statusIndicator.style.color = '#fca5a5';
+        });
+
+        // Form Submit (User sends message)
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            // Add user message to UI
+            addMessage(text, 'user');
+
+            // Emit to server
+            socket.emit('sendMessage', { message: text });
+            messageInput.value = '';
+
+            // Prep UI for agent response
+            currentAgentMessageDiv = null;
+            typingIndicator.style.display = 'block';
+        });
+
+        // Handle Streaming Chunks
+        socket.on('messageChunk', (data) => {
+            typingIndicator.style.display = 'none';
+
+            // If this is the very first chunk of a new response, create the div
+            if (!currentAgentMessageDiv) {
+                currentAgentMessageDiv = createMessageDiv('agent');
+                messagesContainer.appendChild(currentAgentMessageDiv);
+            }
+
+            // Append text chunk directly
+            // We replace newlines with <br> for HTML rendering
+            currentAgentMessageDiv.innerHTML += data.chunk.replace(/\n/g, '<br>');
+            scrollToBottom();
+        });
+
+        // Handle Stream Completion
+        socket.on('messageComplete', (data) => {
+            typingIndicator.style.display = 'none';
+            currentAgentMessageDiv = null; // Reset for next interaction
+        });
+
+        // Handle Errors
+        socket.on('messageError', (err) => {
+            typingIndicator.style.display = 'none';
+            addMessage("⚠️ " + (err.error || "An error occurred connecting to the agent."), 'agent');
+            currentAgentMessageDiv = null;
+        });
+
+        // Helpers
+        function addMessage(text, sender) {
+            const div = createMessageDiv(sender);
+            div.textContent = text;
+            messagesContainer.appendChild(div);
+            scrollToBottom();
+        }
+
+        function createMessageDiv(sender) {
+            const div = document.createElement('div');
+            div.classList.add('message');
+            div.classList.add(sender === 'user' ? 'user-message' : 'agent-message');
+            return div;
+        }
+
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    </script>
+
+</body>
+
+</html>

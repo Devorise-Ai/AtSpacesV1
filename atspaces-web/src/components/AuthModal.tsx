@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { X, Phone, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
 
 interface AuthModalProps {
@@ -95,12 +95,12 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
         // Simulate resend
     };
 
-    const overlayVariants = {
+    const overlayVariants: Variants = {
         hidden: { opacity: 0 },
         visible: { opacity: 1 }
     };
 
-    const modalVariants = {
+    const modalVariants: Variants = {
         hidden: { opacity: 0, scale: 0.9, y: 30 },
         visible: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', damping: 25, stiffness: 300 } },
         exit: { opacity: 0, scale: 0.9, y: 30, transition: { duration: 0.2 } }

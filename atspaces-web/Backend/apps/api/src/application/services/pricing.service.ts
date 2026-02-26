@@ -10,7 +10,7 @@ export class PricingService implements IPricingService {
         @Inject('IVendorServiceRepository') private readonly vendorServiceRepository: IVendorServiceRepository,
     ) { }
 
-    async calculatePrice(vendorServiceId: string, start: Date, end: Date): Promise<Money> {
+    async calculatePrice(vendorServiceId: number, start: Date, end: Date): Promise<Money> {
         const vendorService = await this.vendorServiceRepository.findById(vendorServiceId);
 
         if (!vendorService) {
@@ -19,18 +19,22 @@ export class PricingService implements IPricingService {
 
         const duration = this.getDurationInUnit(start, end, vendorService.priceUnit);
 
-        if (vendorService.minDuration && duration < vendorService.minDuration) {
-            throw new BusinessException(`Minimum duration is ${vendorService.minDuration} ${vendorService.priceUnit}`);
+        if (vendorService.minBookingDuration && duration < vendorService.minBookingDuration) {
+            throw new BusinessException(`Minimum duration is ${vendorService.minBookingDuration} ${vendorService.priceUnit}`);
         }
 
-        if (vendorService.maxDuration && duration > vendorService.maxDuration) {
-            throw new BusinessException(`Maximum duration is ${vendorService.maxDuration} ${vendorService.priceUnit}`);
+        if (vendorService.maxBookingDuration && duration > vendorService.maxBookingDuration) {
+            throw new BusinessException(`Maximum duration is ${vendorService.maxBookingDuration} ${vendorService.priceUnit}`);
         }
 
-        // Assuming vendorService has price field of type Money or amount
-        const amountStr = typeof vendorService.price === 'object' ? vendorService.price.amount : vendorService.price;
-        const basePrice = Money.create(Number(amountStr), 'JOD');
+        const basePrice = Money.create(vendorService.pricePerUnit, 'JOD');
         return basePrice.multiply(duration);
+    }
+
+    async getAvailablePrices(vendorServiceId: number): Promise<Money[]> {
+        const vendorService = await this.vendorServiceRepository.findById(vendorServiceId);
+        if (!vendorService) return [];
+        return [Money.create(vendorService.pricePerUnit, 'JOD')];
     }
 
     private getDurationInUnit(start: Date, end: Date, unit: string): number {

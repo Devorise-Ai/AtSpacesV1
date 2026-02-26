@@ -1,4 +1,5 @@
 export enum RequestType {
-    CAPACITY_CHANGE = 'CAPACITY_CHANGE',
-    SERVICE_UPDATE = 'SERVICE_UPDATE',
+    CAPACITY_CHANGE = 'capacity_change',
+    PAUSE_BRANCH = 'pause_branch',
+    ACTIVATE_BRANCH = 'activate_branch',
 }

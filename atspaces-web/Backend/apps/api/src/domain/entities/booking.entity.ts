@@ -2,10 +2,10 @@ import { DomainException } from '../exceptions/domain.exception';
 import { BookingStatus } from '../enums/booking-status.enum';
 
 export class Booking {
-    id: string;
+    id: number;
     bookingNumber: string;
-    customerId: string;
-    vendorServiceId: string;
+    customerId: number;
+    vendorServiceId: number;
     startTime: Date;
     endTime: Date;
     quantity: number;
@@ -17,10 +17,10 @@ export class Booking {
     cancellationReason?: string;
 
     constructor(
-        id: string,
+        id: number = 0,
         bookingNumber: string,
-        customerId: string,
-        vendorServiceId: string,
+        customerId: number,
+        vendorServiceId: number,
         startTime: Date,
         endTime: Date,
         quantity: number,

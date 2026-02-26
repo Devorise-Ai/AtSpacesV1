@@ -3,32 +3,32 @@ import { ApprovalStatus } from '../enums/approval-status.enum';
 import { RequestType } from '../enums/request-type.enum';
 
 export class ApprovalRequest {
-    id: string;
-    vendorId: string;
-    branchId: string;
-    serviceId?: string | null;
+    id: number;
+    vendorId: number;
+    branchId: number;
+    serviceId?: number | null;
     requestType: RequestType;
     oldValue?: string | null;
     newValue: string;
     reason?: string | null;
     private _status: ApprovalStatus;
     createdAt: Date;
-    reviewedBy?: string | null;
+    reviewedBy?: number | null;
     reviewNotes?: string | null;
     reviewedAt?: Date | null;
 
     constructor(
-        id: string,
-        vendorId: string,
-        branchId: string,
-        serviceId: string | null = null,
+        id: number = 0,
+        vendorId: number,
+        branchId: number,
+        serviceId: number | null = null,
         requestType: RequestType,
         oldValue: string | null = null,
         newValue: string,
         reason: string | null = null,
         status: ApprovalStatus = ApprovalStatus.PENDING,
         createdAt: Date = new Date(),
-        reviewedBy: string | null = null,
+        reviewedBy: number | null = null,
         reviewNotes: string | null = null,
         reviewedAt: Date | null = null,
     ) {
@@ -51,7 +51,7 @@ export class ApprovalRequest {
         return this._status;
     }
 
-    approve(adminId: string, notes?: string): void {
+    approve(adminId: number, notes?: string): void {
         if (this._status !== ApprovalStatus.PENDING) {
             throw new DomainException('Only pending requests can be approved');
         }
@@ -61,7 +61,7 @@ export class ApprovalRequest {
         this.reviewedAt = new Date();
     }
 
-    reject(adminId: string, notes?: string): void {
+    reject(adminId: number, notes?: string): void {
         if (this._status !== ApprovalStatus.PENDING) {
             throw new DomainException('Only pending requests can be rejected');
         }

@@ -1,13 +1,13 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { RequestType } from '../../../domain/enums/request-type.enum';
 
 export class CreateApprovalRequestDto {
-    @IsUUID()
-    branchId: string;
+    @IsInt()
+    branchId: number;
 
     @IsOptional()
-    @IsUUID()
-    serviceId?: string;
+    @IsInt()
+    serviceId?: number;
 
     @IsEnum(RequestType)
     requestType: RequestType;

@@ -1,7 +1,7 @@
 export enum BookingStatus {
-    PENDING = 'PENDING',
-    CONFIRMED = 'CONFIRMED',
-    CANCELLED = 'CANCELLED',
-    COMPLETED = 'COMPLETED',
-    NO_SHOW = 'NO_SHOW',
+    PENDING = 'pending',
+    CONFIRMED = 'confirmed',
+    CANCELLED = 'cancelled',
+    COMPLETED = 'completed',
+    NO_SHOW = 'no_show',
 }

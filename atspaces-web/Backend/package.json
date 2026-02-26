@@ -14,10 +14,10 @@
     "seed": "ts-node apps/api/prisma/seed.ts"
   },
   "devDependencies": {
-    "@prisma/client": "^6.4.1",
+    "@prisma/client": "5.10.2",
     "@types/node": "^25.3.0",
     "prettier": "^3.7.4",
-    "prisma": "^6.4.1",
+    "prisma": "5.10.2",
     "ts-node": "^10.9.2",
     "turbo": "^2.8.10",
     "typescript": "^5.9.2"

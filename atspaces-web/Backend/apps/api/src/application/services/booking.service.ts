@@ -22,7 +22,7 @@ export class BookingService implements IBookingService {
         @Inject('INotificationService') private readonly notificationService: INotificationService,
     ) { }
 
-    async createBooking(dto: CreateBookingDto, customerId: string): Promise<Booking> {
+    async createBooking(dto: CreateBookingDto, customerId: number): Promise<Booking> {
         const vendorService = await this.vendorServiceRepository.findById(dto.vendorServiceId);
         if (!vendorService) {
             throw new BusinessException('Vendor service not found');
@@ -47,7 +47,7 @@ export class BookingService implements IBookingService {
             await this.availabilityRepository.decreaseUnits(dto.vendorServiceId, start, end, dto.quantity);
 
             const booking = new Booking(
-                Date.now().toString(), // simplistic ID
+                0, // Auto-increment
                 generateBookingNumber(),
                 customerId,
                 dto.vendorServiceId,
@@ -72,7 +72,7 @@ export class BookingService implements IBookingService {
         }
     }
 
-    async checkIn(bookingId: string, vendorId: string): Promise<void> {
+    async checkIn(bookingId: number, vendorId: number): Promise<void> {
         const booking = await this.bookingRepository.findById(bookingId);
         if (!booking) throw new BusinessException('Booking not found');
 
@@ -81,7 +81,7 @@ export class BookingService implements IBookingService {
         await this.bookingRepository.save(booking);
     }
 
-    async cancelBooking(bookingId: string, userId: string, reason?: string): Promise<void> {
+    async cancelBooking(bookingId: number, userId: number, reason?: string): Promise<void> {
         const booking = await this.bookingRepository.findById(bookingId);
         if (!booking) throw new BusinessException('Booking not found');
 
@@ -94,7 +94,7 @@ export class BookingService implements IBookingService {
         await this.notificationService.sendBookingCancelled(booking, userId);
     }
 
-    async markNoShow(bookingId: string, vendorId: string): Promise<void> {
+    async markNoShow(bookingId: number, vendorId: number): Promise<void> {
         const booking = await this.bookingRepository.findById(bookingId);
         if (!booking) throw new BusinessException('Booking not found');
 
@@ -102,16 +102,17 @@ export class BookingService implements IBookingService {
         await this.bookingRepository.save(booking);
     }
 
-    async confirmPayment(bookingId: string): Promise<void> {
+    async confirmPayment(bookingId: number): Promise<void> {
         const booking = await this.bookingRepository.findById(bookingId);
         if (!booking) throw new BusinessException('Booking not found');
 
         booking.confirm();
         await this.bookingRepository.save(booking);
+        // customerId is also number now
         await this.notificationService.sendBookingConfirmation(booking, booking.customerId);
     }
 
-    async findByCustomer(customerId: string): Promise<Booking[]> {
+    async findByCustomer(customerId: number): Promise<Booking[]> {
         return this.bookingRepository.findByCustomer(customerId);
     }
 }

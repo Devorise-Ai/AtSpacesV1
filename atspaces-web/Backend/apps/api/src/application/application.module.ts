@@ -4,18 +4,17 @@ import { NotificationService } from './services/notification.service';
 import { PricingService } from './services/pricing.service';
 import { ApprovalRequestService } from './services/approval-request.service';
 import { BookingService } from './services/booking.service';
+import { BranchService } from './services/branch.service';
 import { EmailService } from '../infrastructure/services/email.service';
 import { SmsService } from '../infrastructure/services/sms.service';
 import { AiContextService } from './services/ai-context.service';
 import { AgentService } from '../infrastructure/services/agent.service';
 
-// Mock repositories for providers since they are interfaces and don't have implementations yet
-// This is just to satisfy DI in NestJS, in reality you'd provide implementations
-const MockVendorServiceRepository = { provide: 'IVendorServiceRepository', useValue: {} };
-const MockApprovalRequestRepository = { provide: 'IApprovalRequestRepository', useValue: {} };
-const MockBookingRepository = { provide: 'IBookingRepository', useValue: {} };
-const MockAvailabilityRepository = { provide: 'IAvailabilityRepository', useValue: {} };
-const MockUserRepository = { provide: 'IUserRepository', useValue: {} };
+import { PrismaUserRepository } from '../infrastructure/repositories/prisma-user.repository';
+import { PrismaBookingRepository } from '../infrastructure/repositories/prisma-booking.repository';
+import { PrismaVendorServiceRepository } from '../infrastructure/repositories/prisma-vendor-service.repository';
+import { PrismaAvailabilityRepository } from '../infrastructure/repositories/prisma-availability.repository';
+import { PrismaApprovalRequestRepository } from '../infrastructure/repositories/prisma-approval-request.repository';
 
 @Module({
     imports: [InfrastructureModule],
@@ -24,18 +23,36 @@ const MockUserRepository = { provide: 'IUserRepository', useValue: {} };
         { provide: 'INotificationService', useClass: NotificationService },
         { provide: 'IEmailService', useExisting: EmailService },
         { provide: 'ISmsService', useExisting: SmsService },
+        { provide: 'IUserRepository', useExisting: PrismaUserRepository },
+        { provide: 'IBookingRepository', useExisting: PrismaBookingRepository },
+        { provide: 'IVendorServiceRepository', useExisting: PrismaVendorServiceRepository },
+        { provide: 'IAvailabilityRepository', useExisting: PrismaAvailabilityRepository },
+        { provide: 'IApprovalRequestRepository', useExisting: PrismaApprovalRequestRepository },
         NotificationService,
         PricingService,
         ApprovalRequestService,
         BookingService,
+        BranchService,
         AiContextService,
         AgentService,
-        MockVendorServiceRepository,
-        MockApprovalRequestRepository,
-        MockBookingRepository,
-        MockAvailabilityRepository,
-        MockUserRepository,
     ],
-    exports: [NotificationService, PricingService, ApprovalRequestService, BookingService, AiContextService, AgentService],
+    exports: [
+        NotificationService,
+        PricingService,
+        ApprovalRequestService,
+        BookingService,
+        BranchService,
+        AiContextService,
+        AgentService,
+        'IPricingService',
+        'INotificationService',
+        'IEmailService',
+        'ISmsService',
+        'IUserRepository',
+        'IBookingRepository',
+        'IVendorServiceRepository',
+        'IAvailabilityRepository',
+        'IApprovalRequestRepository',
+    ],
 })
 export class ApplicationModule { }

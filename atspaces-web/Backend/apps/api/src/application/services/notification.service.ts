@@ -16,7 +16,7 @@ export class NotificationService implements INotificationService {
         @Inject('IUserRepository') private readonly userRepository: IUserRepository,
     ) { }
 
-    async sendBookingConfirmation(booking: Booking, customerId: string): Promise<void> {
+    async sendBookingConfirmation(booking: Booking, customerId: number): Promise<void> {
         try {
             const user = await this.userRepository.findById(customerId);
             if (!user) return;
@@ -29,7 +29,7 @@ export class NotificationService implements INotificationService {
         }
     }
 
-    async sendBookingCancelled(booking: Booking, customerId: string): Promise<void> {
+    async sendBookingCancelled(booking: Booking, customerId: number): Promise<void> {
         try {
             const user = await this.userRepository.findById(customerId);
             if (!user) return;
@@ -42,31 +42,40 @@ export class NotificationService implements INotificationService {
         }
     }
 
-    async sendApprovalResult(vendorId: string, request: ApprovalRequest, approved: boolean, reason?: string): Promise<void> {
-        try {
-            const vendor = await this.userRepository.findById(vendorId);
-            if (!vendor) return;
-
-            const status = approved ? 'Approved' : 'Rejected';
-            const message = `Your capacity change request has been ${status}. ${reason ? 'Reason: ' + reason : ''}`;
-
-            if (vendor.email) await this.emailService.send(vendor.email, `Request ${status}`, message);
-            if (vendor.phoneNumber) await this.smsService.send(vendor.phoneNumber, message);
-        } catch (error) {
-            this.logger.error(`Failed to send approval result to vendor ${vendorId}`, error);
-        }
-    }
-
-    async sendReminder(booking: Booking, customerId: string): Promise<void> {
+    async sendReviewRequest(booking: Booking, customerId: number): Promise<void> {
         try {
             const user = await this.userRepository.findById(customerId);
             if (!user) return;
 
-            const message = `Reminder: Your booking ${booking.bookingNumber} is tomorrow.`;
-            if (user.email) await this.emailService.send(user.email, 'Booking Reminder', message);
+            const message = `Hope you enjoyed your experience with booking ${booking.bookingNumber}! Please leave a review.`;
+            if (user.email) await this.emailService.send(user.email, 'Leave a Review', message);
             if (user.phoneNumber) await this.smsService.send(user.phoneNumber, message);
         } catch (error) {
-            this.logger.error(`Failed to send booking reminder for ${booking.id}`, error);
+            this.logger.error(`Failed to send review request for ${booking.id}`, error);
+        }
+    }
+
+    async sendApprovalNotification(request: ApprovalRequest, vendorId: number): Promise<void> {
+        try {
+            const vendor = await this.userRepository.findById(vendorId);
+            if (!vendor) return;
+
+            const status = request.status;
+            const message = `Your request (ID: ${request.id}) is now ${status}. ${request.reviewNotes ? 'Notes: ' + request.reviewNotes : ''}`;
+
+            if (vendor.email) await this.emailService.send(vendor.email, `Request Update`, message);
+            if (vendor.phoneNumber) await this.smsService.send(vendor.phoneNumber, message);
+        } catch (error) {
+            this.logger.error(`Failed to send approval notification to vendor ${vendorId}`, error);
+        }
+    }
+
+    async sendSmsVerification(phoneNumber: string, code: string): Promise<void> {
+        try {
+            const message = `Your verification code is: ${code}`;
+            await this.smsService.send(phoneNumber, message);
+        } catch (error) {
+            this.logger.error(`Failed to send SMS verification to ${phoneNumber}`, error);
         }
     }
 }

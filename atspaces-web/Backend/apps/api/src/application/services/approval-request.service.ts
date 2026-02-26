@@ -16,10 +16,9 @@ export class ApprovalRequestService {
         // private readonly auditService: IAuditService, // Optional
     ) { }
 
-    async createRequest(vendorId: string, dto: CreateApprovalRequestDto): Promise<ApprovalRequest> {
-        const id = Date.now().toString(); // Or use a UUID generator
+    async createRequest(vendorId: number, dto: CreateApprovalRequestDto): Promise<ApprovalRequest> {
         const request = new ApprovalRequest(
-            id,
+            0, // Auto-increment handled by DB
             vendorId,
             dto.branchId,
             dto.serviceId,
@@ -32,7 +31,7 @@ export class ApprovalRequestService {
         return request;
     }
 
-    async approveRequest(requestId: string, adminId: string, reviewNotes?: string): Promise<void> {
+    async approveRequest(requestId: number, adminId: number, reviewNotes?: string): Promise<void> {
         const request = await this.approvalRequestRepository.findById(requestId);
         if (!request) {
             throw new BusinessException('Approval request not found');
@@ -45,18 +44,12 @@ export class ApprovalRequestService {
         if (request.requestType === RequestType.CAPACITY_CHANGE && request.serviceId) {
             const vendorService = await this.vendorServiceRepository.findById(request.serviceId);
             if (vendorService) {
-                // Assuming vendorService has a setCapacity method or capacity property
-                // vendorService.setCapacity(Number(request.newValue));
-                // await this.vendorServiceRepository.save(vendorService);
+                // Update implementation here if needed
             }
         }
-
-        // if (this.auditService) {
-        //   await this.auditService.log(adminId, 'APPROVED_REQUEST', { requestId });
-        // }
     }
 
-    async rejectRequest(requestId: string, adminId: string, reviewNotes?: string): Promise<void> {
+    async rejectRequest(requestId: number, adminId: number, reviewNotes?: string): Promise<void> {
         const request = await this.approvalRequestRepository.findById(requestId);
         if (!request) {
             throw new BusinessException('Approval request not found');
@@ -64,10 +57,6 @@ export class ApprovalRequestService {
 
         request.reject(adminId, reviewNotes);
         await this.approvalRequestRepository.save(request);
-
-        // if (this.auditService) {
-        //   await this.auditService.log(adminId, 'REJECTED_REQUEST', { requestId, reviewNotes });
-        // }
     }
 
     async getPendingRequests(): Promise<ApprovalRequest[]> {

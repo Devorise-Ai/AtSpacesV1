@@ -2,8 +2,8 @@ import { IsDateString, IsEnum, IsInt, IsOptional, IsUUID, Min } from 'class-vali
 import { PaymentMethod } from '../../../domain/enums/payment-method.enum';
 
 export class CreateBookingDto {
-    @IsUUID()
-    vendorServiceId: string;
+    @IsInt()
+    vendorServiceId: number;
 
     @IsDateString()
     startTime: string;

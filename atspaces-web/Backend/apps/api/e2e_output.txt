@@ -1,0 +1,102 @@
+﻿
+> api@0.0.1 test:e2e
+> jest --config ./test/jest-e2e.json --verbose
+
+node.exe : FAIL test/app.e2e-spec.ts
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Users\Mustafa\AppData\Roamin ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL test/app.e2e- 
+   spec.ts:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  AppController (e2e)
+    × / (GET) (29 ms)
+
+  ● AppController (e2e) › / (GET)
+
+    Nest can't resolve dependencies of the AuthService (?, 
+JwtService). Please make sure that the argument 
+"IUserRepository" at index [0] is available in the AuthModule 
+context.
+
+    Potential solutions:
+    - Is AuthModule a valid NestJS module?
+    - If "IUserRepository" is a provider, is it part of the 
+current AuthModule?
+    - If "IUserRepository" is exported from a separate @Module, 
+is that module imported within AuthModule?
+      @Module({
+        imports: [ /* the Module containing "IUserRepository" 
+*/ ]
+      })
+
+    For more common dependency resolution issues, see: 
+https://docs.nestjs.com/faq/common-errors
+
+    [0m [90m  9 |[39m
+     [90m 10 |[39m   beforeEach([36masync[39m () 
+[33m=>[39m {
+    [31m[1m>[22m[39m[90m 11 |[39m     [36mconst[39m 
+moduleFixture[33m:[39m [33mTestingModule[39m [33m=[39m 
+[36mawait[39m [33mTest[39m[33m.[39mcreateTestingModule({
+     [90m    |[39m                                          
+[31m[1m^[22m[39m
+     [90m 12 |[39m       imports[33m:[39m 
+[[33mAppModule[39m][33m,[39m
+     [90m 13 |[39m     })[33m.[39mcompile()[33m;[39m
+     [90m 14 |[39m[0m
+
+      at TestingInjector.lookupComponentInParentModules 
+(../../../node_modules/@nestjs/core/injector/injector.js:290:19)
+      at TestingInjector.resolveComponentWrapper (../../../node_
+modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam 
+(../../../node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams 
+(../../../node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance 
+(../../../node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider 
+(../../../node_modules/@nestjs/core/injector/injector.js:103:9)
+      at ../../../node_modules/@nestjs/core/injector/instance-lo
+ader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../..
+/../node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../node_modules/@nestjs/core/injector/instance-lo
+ader.js:40:13
+          at async Promise.all (index 7)
+      at TestingInstanceLoader.createInstances (../../../node_mo
+dules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (..
+/../../node_modules/@nestjs/core/injector/instance-loader.js:22:
+13)
+      at TestingInstanceLoader.createInstancesOfDependencies (..
+/../../node_modules/@nestjs/testing/testing-instance-loader.js:9
+:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../
+../../node_modules/@nestjs/testing/testing-module.builder.js:118
+:9)
+      at TestingModuleBuilder.compile (../../../node_modules/@ne
+stjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (app.e2e-spec.ts:11:42)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        1.942 s, estimated 3 s
+Ran all test suites.
+npm error Lifecycle script `test:e2e` failed with error:
+npm error code 1
+npm error path C:\Users\Mustafa\Desktop\atspaces 
+front\AtSpaces-Front\atspaces-web\Backend\apps\api
+npm error workspace api@0.0.1
+npm error location C:\Users\Mustafa\Desktop\atspaces 
+front\AtSpaces-Front\atspaces-web\Backend\apps\api
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c jest 
+--config ./test/jest-e2e.json --verbose

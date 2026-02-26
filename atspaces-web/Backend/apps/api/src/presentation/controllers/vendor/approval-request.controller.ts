@@ -18,7 +18,7 @@ export class VendorApprovalController {
         @Body() dto: CreateApprovalRequestDto,
         @Req() req: any,
     ) {
-        const vendorId = req.user?.id || 'dummy-vendor-id'; // Assume injected by guard
-        return this.approvalRequestService.createRequest(vendorId, dto);
+        const vendorId = req.user?.id || 1;
+        return this.approvalRequestService.createRequest(Number(vendorId), dto);
     }
 }

@@ -1,62 +1,56 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CreateBookingDto } from '../../application/dtos/requests/create-booking.dto';
 import { BookingService } from '../../application/services/booking.service';
-// import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-// import { RolesGuard } from '../../common/guards/roles.guard';
-// import { Roles } from '../../common/decorators/roles.decorator';
+import { JwtAuthGuard } from '../../application/guards/jwt-auth.guard';
 
 @ApiTags('Bookings')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('bookings')
-// @UseGuards(JwtAuthGuard, RolesGuard)
 export class BookingsController {
     constructor(private readonly bookingService: BookingService) { }
 
     @Post()
-    // @Roles('customer')
     async create(
         @Body() dto: CreateBookingDto,
         @Req() req: any,
     ) {
-        const customerId = req.user?.id || 'dummy-customer-id';
-        return this.bookingService.createBooking(dto, customerId);
+        const customerId = req.user?.id;
+        return this.bookingService.createBooking(dto, Number(customerId));
     }
 
     @Get('my')
-    // @Roles('customer')
     async getMyBookings(@Req() req: any) {
-        const customerId = req.user?.id || 'dummy-customer-id';
-        return this.bookingService.findByCustomer(customerId);
+        const customerId = req.user?.id;
+        return this.bookingService.findByCustomer(Number(customerId));
     }
 
     @Patch(':id/cancel')
-    // @Roles('customer')
     async cancel(
-        @Param('id') id: string,
+        @Param('id', ParseIntPipe) id: number,
         @Body('reason') reason: string,
         @Req() req: any,
     ) {
-        const customerId = req.user?.id || 'dummy-customer-id';
-        return this.bookingService.cancelBooking(id, customerId, reason);
+        const userId = req.user?.id;
+        return this.bookingService.cancelBooking(id, Number(userId), reason);
     }
 
     @Patch(':id/check-in')
-    // @Roles('vendor')
     async checkIn(
-        @Param('id') id: string,
+        @Param('id', ParseIntPipe) id: number,
         @Req() req: any,
     ) {
-        const vendorId = req.user?.id || 'dummy-vendor-id';
-        return this.bookingService.checkIn(id, vendorId);
+        const vendorId = req.user?.id;
+        return this.bookingService.checkIn(id, Number(vendorId));
     }
 
     @Patch(':id/no-show')
-    // @Roles('vendor')
     async markNoShow(
-        @Param('id') id: string,
+        @Param('id', ParseIntPipe) id: number,
         @Req() req: any,
     ) {
-        const vendorId = req.user?.id || 'dummy-vendor-id';
-        return this.bookingService.markNoShow(id, vendorId);
+        const vendorId = req.user?.id;
+        return this.bookingService.markNoShow(id, Number(vendorId));
     }
 }

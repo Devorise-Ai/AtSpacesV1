@@ -41,14 +41,20 @@ services:
     command: npx turbo run dev --filter=api
     ports:
       - "3001:3001"
-    env_file:
-      - apps/api/.env
     environment:
       - DATABASE_URL=postgresql://postgres:password@db:5432/atspaces
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PORT=3001
       - NODE_ENV=development
+      - JWT_SECRET=atspaces-super-secret-key-change-this-in-production
+      - JWT_EXPIRES_IN=1d
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-sk-placeholder}
+      - SMTP_EMAIL=${SMTP_EMAIL:-noreply@atspaces.com}
+      - SMTP_APP_PASSWORD=${SMTP_APP_PASSWORD:-placeholder}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-placeholder}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-placeholder}
+      - GOOGLE_CALLBACK_URL=http://localhost:3001/api/auth/google/callback
     depends_on:
       db:
         condition: service_healthy

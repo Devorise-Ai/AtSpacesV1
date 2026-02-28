@@ -40,4 +40,25 @@ export const adminService = {
         const response = await api.get("/branches", { params: { city } });
         return response.data;
     },
+
+    pauseBranch: async (id: number) => {
+        const response = await api.patch(`/admin/branches/${id}/pause`);
+        return response.data;
+    },
+
+    resumeBranch: async (id: number) => {
+        const response = await api.patch(`/admin/branches/${id}/resume`);
+        return response.data;
+    },
+
+    updateBranchAmenities: async (id: number, facilities: string[]) => {
+        const response = await api.patch(`/admin/branches/${id}/amenities`, { facilities });
+        return response.data;
+    },
+
+    updatePricing: async (serviceId: number, data: { pricePerUnit?: number; priceUnit?: string }) => {
+        const response = await api.patch(`/admin/pricing/${serviceId}`, data);
+        return response.data;
+    },
 };
+

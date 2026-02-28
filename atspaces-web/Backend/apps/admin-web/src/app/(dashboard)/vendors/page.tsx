@@ -9,10 +9,10 @@ import Link from "next/link";
 import { adminService } from "@/services/admin.service";
 
 function getStatusStyle(status: string) {
-    switch (status) {
-        case "Active": return "bg-green-500/10 text-green-400";
-        case "Under Review": return "bg-yellow-500/10 text-yellow-400";
-        case "Suspended": return "bg-red-500/10 text-red-400";
+    switch (status?.toLowerCase()) {
+        case "active": return "bg-green-500/10 text-green-400";
+        case "pending": return "bg-yellow-500/10 text-yellow-400";
+        case "suspended": return "bg-red-500/10 text-red-400";
         default: return "bg-muted text-muted-foreground";
     }
 }
@@ -110,11 +110,44 @@ export default function VendorsPage() {
                             <span>Joined {vendor.joinedDate}</span>
                         </div>
 
-                        <Link href={`/vendors/${vendor.id}`}>
-                            <Button variant="outline" size="sm" className="w-full rounded-xl text-xs h-9">
-                                View Profile <ArrowRight className="size-3 ml-1" />
-                            </Button>
-                        </Link>
+                        <div className="flex gap-2">
+                            <Link href={`/vendors/${vendor.id}`} className="flex-1">
+                                <Button variant="outline" size="sm" className="w-full rounded-xl text-xs h-9">
+                                    View Profile <ArrowRight className="size-3 ml-1" />
+                                </Button>
+                            </Link>
+                            {vendor.status?.toLowerCase() === "active" ? (
+                                <Button
+                                    variant="ghost" size="sm"
+                                    className="rounded-xl text-xs h-9 text-red-400 hover:bg-red-500/10"
+                                    onClick={async () => {
+                                        try {
+                                            await adminService.suspendUser(vendor.id);
+                                            setVendors(prev => prev.map(v =>
+                                                v.id === vendor.id ? { ...v, status: "suspended" } : v
+                                            ));
+                                        } catch (err) { console.error(err); }
+                                    }}
+                                >
+                                    <Pause className="size-3 mr-1" /> Suspend
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant="ghost" size="sm"
+                                    className="rounded-xl text-xs h-9 text-green-400 hover:bg-green-500/10"
+                                    onClick={async () => {
+                                        try {
+                                            await adminService.activateUser(vendor.id);
+                                            setVendors(prev => prev.map(v =>
+                                                v.id === vendor.id ? { ...v, status: "active" } : v
+                                            ));
+                                        } catch (err) { console.error(err); }
+                                    }}
+                                >
+                                    <Play className="size-3 mr-1" /> Activate
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 ))}
             </div>

@@ -123,4 +123,75 @@ export class AdminController {
             select: { id: true, fullName: true, email: true, status: true },
         });
     }
+
+    /**
+     * PATCH /admin/branches/:id/pause
+     * Suspend a branch (prevents new bookings)
+     */
+    @Patch('branches/:id/pause')
+    async pauseBranch(@Param('id', ParseIntPipe) id: number) {
+        return this.prisma.branch.update({
+            where: { id },
+            data: { status: 'suspended' },
+            select: { id: true, name: true, city: true, status: true },
+        });
+    }
+
+    /**
+     * PATCH /admin/branches/:id/resume
+     * Resume a suspended branch
+     */
+    @Patch('branches/:id/resume')
+    async resumeBranch(@Param('id', ParseIntPipe) id: number) {
+        return this.prisma.branch.update({
+            where: { id },
+            data: { status: 'active' },
+            select: { id: true, name: true, city: true, status: true },
+        });
+    }
+
+    /**
+     * PATCH /admin/branches/:id/amenities
+     * Update branch facilities
+     */
+    @Patch('branches/:id/amenities')
+    async updateBranchAmenities(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() body: { facilities?: string[] },
+    ) {
+        if (body.facilities) {
+            await this.prisma.branchFacility.deleteMany({ where: { branchId: id } });
+            for (const facilityId of body.facilities) {
+                await this.prisma.branchFacility.create({
+                    data: { branchId: id, facilityId: parseInt(facilityId) },
+                });
+            }
+        }
+        return this.prisma.branch.findUnique({
+            where: { id },
+            include: {
+                branchFacilities: { include: { facility: true } },
+            },
+        });
+    }
+
+    /**
+     * PATCH /admin/pricing/:serviceId
+     * Update platform-wide pricing for a service type
+     */
+    @Patch('pricing/:serviceId')
+    async updatePricing(
+        @Param('serviceId', ParseIntPipe) serviceId: number,
+        @Body() body: { pricePerUnit?: number; priceUnit?: string },
+    ) {
+        const data: any = {};
+        if (body.pricePerUnit !== undefined) data.pricePerUnit = body.pricePerUnit;
+        if (body.priceUnit) data.priceUnit = body.priceUnit;
+        const updated = await this.prisma.vendorService.updateMany({
+            where: { serviceId },
+            data,
+        });
+        return { updated: updated.count, serviceId };
+    }
 }
+

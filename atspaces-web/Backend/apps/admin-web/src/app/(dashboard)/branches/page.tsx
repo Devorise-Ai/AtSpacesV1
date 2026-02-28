@@ -9,15 +9,14 @@ import { Button } from "@repo/ui/button";
 import Link from "next/link";
 import { adminService } from "@/services/admin.service";
 
-const statuses = ["All", "Active", "Under Review", "Paused", "Inactive"];
+const statuses = ["All", "Active", "Suspended", "Pending"];
 const cities = ["All Cities", "Amman", "Irbid", "Zarqa", "Aqaba", "Salt", "Madaba"];
 
 function getStatusStyle(status: string) {
-    switch (status) {
-        case "Active": return "bg-green-500/10 text-green-400";
-        case "Under Review": return "bg-yellow-500/10 text-yellow-400";
-        case "Paused": return "bg-red-500/10 text-red-400";
-        case "Inactive": return "bg-muted text-muted-foreground";
+    switch (status?.toLowerCase()) {
+        case "active": return "bg-green-500/10 text-green-400";
+        case "pending": return "bg-yellow-500/10 text-yellow-400";
+        case "suspended": case "paused": return "bg-red-500/10 text-red-400";
         default: return "bg-muted text-muted-foreground";
     }
 }
@@ -53,8 +52,22 @@ export default function BranchesPage() {
         return matchesStatus && matchesCity && matchesSearch;
     });
 
-    const handleSuspendConfirm = () => {
-        // In real app: API call to pause/resume branch
+    const handleSuspendConfirm = async () => {
+        if (!suspendDialog) return;
+        try {
+            if (suspendDialog.action === "pause") {
+                await adminService.pauseBranch(Number(suspendDialog.id));
+            } else {
+                await adminService.resumeBranch(Number(suspendDialog.id));
+            }
+            setBranches(prev => prev.map(b =>
+                b.id === suspendDialog.id
+                    ? { ...b, status: suspendDialog.action === "pause" ? "Suspended" : "Active" }
+                    : b
+            ));
+        } catch (err) {
+            console.error("Failed to update branch status", err);
+        }
         setSuspendDialog(null);
     };
 
@@ -159,7 +172,7 @@ export default function BranchesPage() {
                                     View Details <ArrowRight className="size-3 ml-1" />
                                 </Button>
                             </Link>
-                            {branch.status === "Active" ? (
+                            {branch.status?.toLowerCase() === "active" ? (
                                 <Button
                                     variant="ghost"
                                     size="sm"
@@ -168,7 +181,7 @@ export default function BranchesPage() {
                                 >
                                     <Pause className="size-3 mr-1" /> Pause
                                 </Button>
-                            ) : branch.status === "Paused" ? (
+                            ) : branch.status?.toLowerCase() === "suspended" ? (
                                 <Button
                                     variant="ghost"
                                     size="sm"

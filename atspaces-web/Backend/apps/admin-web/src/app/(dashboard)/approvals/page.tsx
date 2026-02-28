@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {
     CheckSquare, XCircle, Clock, MessageSquare, Check, X, Send, AlertTriangle
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { adminService } from "@/services/admin.service";
 
 const tabs = ["All", "Pending", "Approved", "Rejected"];

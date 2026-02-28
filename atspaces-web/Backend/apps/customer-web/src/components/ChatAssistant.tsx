@@ -351,7 +351,7 @@ const ChatAssistant = () => {
                                 </div>
                             </div>
                             <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '0.4rem', textAlign: 'center', opacity: 0.6 }}>
-                                Powered by AtSpaces AI · GPT-4o mini
+                                Powered by AtSpaces AI · Kimi AI
                             </p>
                         </div>
                     </motion.div>

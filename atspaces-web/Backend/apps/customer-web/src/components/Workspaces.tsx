@@ -6,6 +6,7 @@ import { useIsMobile } from '../hooks/useMediaQuery';
 import { publicService } from '../services/public.service';
 import WorkspaceCardSkeleton from './WorkspaceCardSkeleton';
 import type { WorkspaceCard } from '../types';
+import { Button } from '@repo/ui/button';
 
 const Workspaces = () => {
     const isMobile = useIsMobile();
@@ -202,27 +203,9 @@ const Workspaces = () => {
                                         <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}> / hour</span>
                                     </div>
                                     <Link to={`/workspaces/${space.branchId}?service=${space.type}`} style={{ textDecoration: 'none' }}>
-                                        <button style={{
-                                            padding: '0.5rem 1rem',
-                                            background: 'rgba(255, 91, 4, 0.1)',
-                                            color: 'var(--primary)',
-                                            border: '1px solid var(--primary)',
-                                            borderRadius: '8px',
-                                            fontWeight: 600,
-                                            cursor: 'pointer',
-                                            transition: 'var(--transition)'
-                                        }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.background = 'var(--primary)';
-                                                e.currentTarget.style.color = 'white';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.background = 'rgba(255, 91, 4, 0.1)';
-                                                e.currentTarget.style.color = 'var(--primary)';
-                                            }}
-                                        >
+                                        <Button variant="outline">
                                             Book Now
-                                        </button>
+                                        </Button>
                                     </Link>
                                 </div>
                             </div>
@@ -233,22 +216,14 @@ const Workspaces = () => {
                 {/* Mobile View All / Call to Action */}
                 <div style={{ textAlign: 'center', marginTop: '3rem' }}>
                     <Link to="/workspaces" style={{ textDecoration: 'none' }}>
-                        <motion.button
-                            className="btn-primary"
+                        <motion.div
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            style={{
-                                padding: '1rem 2.5rem',
-                                fontSize: '1.1rem',
-                                fontWeight: 600,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.75rem',
-                                margin: '0 auto'
-                            }}
                         >
-                            Explore All Workspaces <ArrowRight size={20} />
-                        </motion.button>
+                            <Button size="lg" className="px-10 py-6 text-lg tracking-wide rounded-full font-semibold shadow-lg shadow-orange-500/20">
+                                Explore All Workspaces <ArrowRight size={20} className="ml-2" />
+                            </Button>
+                        </motion.div>
                     </Link>
                 </div>
             </div>

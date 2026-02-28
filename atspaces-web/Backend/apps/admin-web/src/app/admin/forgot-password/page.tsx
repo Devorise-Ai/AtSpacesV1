@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { LayoutGrid, ArrowLeft, Mail } from "lucide-react";
 import Link from "next/link";
 

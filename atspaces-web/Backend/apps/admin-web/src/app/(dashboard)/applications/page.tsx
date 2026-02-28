@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FileText, Search, Eye, Check, X, Clock, MapPin, Mail, Phone, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 
 const applications = [
     {

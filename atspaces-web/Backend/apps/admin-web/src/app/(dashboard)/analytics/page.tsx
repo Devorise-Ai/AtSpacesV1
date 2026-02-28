@@ -5,7 +5,7 @@ import {
     TrendingUp, TrendingDown, CalendarCheck, Activity, DollarSign, UserX, Receipt,
     Download, ArrowUpDown
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, AreaChart, Area, LineChart, Line,

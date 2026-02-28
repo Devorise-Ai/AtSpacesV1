@@ -2,6 +2,8 @@ import { Search, MapPin, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@repo/ui/button';
+import { Input } from '@repo/ui/input';
 
 const Hero = () => {
     const [location, setLocation] = useState('');
@@ -90,37 +92,30 @@ const Hero = () => {
                 >
                     <div className="mobile-border-bottom" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', borderRight: '1px solid var(--border)' }}>
                         <MapPin size={20} color="var(--primary)" />
-                        <input
+                        <Input
                             type="text"
                             placeholder="Where do you want to work?"
                             value={location}
                             onChange={(e) => setLocation(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                            style={{ background: 'transparent', border: 'none', color: 'white', width: '100%', outline: 'none' }}
+                            className="bg-transparent border-none text-white w-full outline-none focus-visible:ring-0 shadow-none px-0"
                         />
                     </div>
                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', padding: '12px' }}>
                         <Calendar size={20} color="var(--primary)" />
-                        <input
+                        <Input
                             type="datetime-local"
                             value={dateTime}
                             onChange={(e) => setDateTime(e.target.value)}
                             min={new Date().toISOString().slice(0, 16)}
-                            style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: dateTime ? 'white' : 'var(--text-secondary)',
-                                width: '100%',
-                                outline: 'none',
-                                colorScheme: 'dark',
-                                cursor: 'pointer'
-                            }}
+                            className={`bg-transparent border-none w-full outline-none focus-visible:ring-0 shadow-none px-0 ${dateTime ? 'text-white' : 'text-muted-foreground'}`}
+                            style={{ colorScheme: 'dark', cursor: 'pointer' }}
                         />
                     </div>
-                    <button className="btn-primary" onClick={handleSearch} style={{ padding: '16px' }}>
-                        <Search size={18} />
+                    <Button size="lg" onClick={handleSearch} className="h-full py-4 px-6 rounded-r-md rounded-l-none text-base">
+                        <Search size={18} className="mr-2" />
                         Search
-                    </button>
+                    </Button>
                 </motion.div>
 
                 {/* Trusted By */}

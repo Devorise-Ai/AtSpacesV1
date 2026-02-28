@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@repo/ui/card";
 import { CheckCircle2, XCircle, Clock, ArrowRight, TrendingUp, TrendingDown, Users, Building2, CalendarCheck } from "lucide-react";
 import { vendorService } from "@/services/vendor.service";
 import { bookingService } from "@/services/booking.service";

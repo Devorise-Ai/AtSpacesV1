@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Menu, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { useRouter } from "next/navigation";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {

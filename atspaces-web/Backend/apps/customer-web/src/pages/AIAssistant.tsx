@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageSquare, Send, Mic, Volume2, Globe, Plus, ChevronLeft, Moon, Sun, User, Clock, Loader2, WifiOff } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { MessageSquare, Send, Mic, Volume2, Globe, ChevronLeft, Moon, Sun, User, Loader2, WifiOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { io, Socket } from 'socket.io-client';
@@ -346,15 +345,14 @@ const AIAssistantPage = () => {
                                 }}>
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', width: '100%' }}>
                                         {suggestionButtons.map((btn, i) => (
-                                            <motion.div
+                                            <div
                                                 key={i}
                                                 onClick={() => handleSend(btn)}
-                                                whileHover={{ scale: 1.02, background: 'var(--bg-input)', borderColor: 'var(--primary)' }}
                                                 className="glass-panel"
                                                 style={{ padding: '1.1rem', borderRadius: '12px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 500, border: '1px solid var(--border)', transition: 'all 0.2s' }}
                                             >
                                                 {btn}
-                                            </motion.div>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>

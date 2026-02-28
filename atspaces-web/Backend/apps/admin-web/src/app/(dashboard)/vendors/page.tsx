@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
     Users, Search, Star, TrendingUp, MapPin, Mail, Plus, Pause, Play, ArrowRight, X, Send
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import Link from "next/link";
 import { adminService } from "@/services/admin.service";
 

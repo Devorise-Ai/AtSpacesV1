@@ -9,6 +9,7 @@ import MapView from '../components/MapView';
 import WorkspaceCardSkeleton from '../components/WorkspaceCardSkeleton';
 import { publicService } from '../services/public.service';
 import type { WorkspaceCard } from '../types';
+import { Button } from '@repo/ui/button';
 
 const CATEGORIES = ['All', 'Hot Desk', 'Dedicated Desk', 'Private Office', 'Meeting Room'];
 
@@ -262,12 +263,12 @@ const WorkspacesPage = () => {
                                     >
                                         <Filter size={16} /> Filters {hasActiveFilters && <span style={{ background: showFilters ? 'white' : 'var(--primary)', color: showFilters ? 'var(--primary)' : 'white', borderRadius: '50%', width: '18px', height: '18px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>!</span>}
                                     </button>
-                                    <button
-                                        className="btn-primary"
-                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.75rem', borderRadius: '50%', minWidth: '46px', minHeight: '46px' }}
+                                    <Button
+                                        size="icon"
+                                        className="rounded-full w-12 h-12 flex-shrink-0"
                                     >
                                         <Search size={20} />
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
 
@@ -669,9 +670,9 @@ const WorkspacesPage = () => {
                                                     <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}> / hour</span>
                                                 </div>
                                                 <Link to={`/workspaces/${space.branchId}?service=${space.type}`} style={{ textDecoration: 'none' }}>
-                                                    <button className="btn-outline-primary">
+                                                    <Button variant="outline">
                                                         Book Now
-                                                    </button>
+                                                    </Button>
                                                 </Link>
                                             </div>
                                         </div>

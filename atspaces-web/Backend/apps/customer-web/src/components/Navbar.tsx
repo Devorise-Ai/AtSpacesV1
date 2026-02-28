@@ -8,6 +8,7 @@ import { useIsMobile } from '../hooks/useMediaQuery';
 import { getUser } from '../lib/token';
 import { authService } from '../services/auth.service';
 import AuthModal from './AuthModal';
+import { Button } from '@repo/ui/button';
 
 const Navbar = () => {
     const { theme, toggleTheme } = useTheme();
@@ -94,7 +95,7 @@ const Navbar = () => {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
                     <Link to="/workspaces" style={{ textDecoration: 'none' }}>
-                        <button className="btn-primary desktop-only" style={{ padding: '8px 20px', fontSize: '0.85rem' }}>Book Now</button>
+                        <Button className="hidden md:inline-flex px-5 text-sm h-9">Book Now</Button>
                     </Link>
 
                     {/* User Menu */}

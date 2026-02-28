@@ -7,7 +7,7 @@ import {
 } from "recharts";
 import { TrendingUp, TrendingDown, Minus, Users, XCircle, CheckCircle2, Star } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@repo/ui/card";
 
 // ── Mock Data ──────────────────────────────────────────────────────────────────
 

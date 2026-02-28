@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { DollarSign, Edit3, AlertTriangle, X, Check, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 
 const serviceTypes = ["Hot Desk", "Private Office", "Meeting Room"];
 

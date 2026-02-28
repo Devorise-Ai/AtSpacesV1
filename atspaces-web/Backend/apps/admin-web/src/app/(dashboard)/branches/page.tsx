@@ -5,7 +5,7 @@ import {
     Building2, Search, Filter, MapPin, Users, Plus, Pause, Play,
     TrendingUp, CalendarCheck, AlertTriangle, ArrowRight
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import Link from "next/link";
 import { adminService } from "@/services/admin.service";
 

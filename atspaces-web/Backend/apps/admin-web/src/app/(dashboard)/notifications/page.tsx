@@ -6,7 +6,7 @@ import {
     Building2, Users, DollarSign, AlertTriangle, FileText, Shield,
     ChevronDown
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 
 type NotificationType = "approval" | "branch" | "vendor" | "pricing" | "security" | "application";
 

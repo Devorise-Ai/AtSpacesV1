@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, HelpCircle, Info } from "lucide-react";
 

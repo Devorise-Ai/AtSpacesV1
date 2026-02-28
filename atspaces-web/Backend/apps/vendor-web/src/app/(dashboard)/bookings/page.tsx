@@ -9,8 +9,8 @@ import {
     TableHeader,
     TableRow
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, CheckCircle2, XCircle } from "lucide-react";

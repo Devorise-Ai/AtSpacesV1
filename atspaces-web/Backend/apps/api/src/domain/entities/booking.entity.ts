@@ -15,6 +15,7 @@ export class Booking {
     checkInTime?: Date;
     cancelledAt?: Date;
     cancellationReason?: string;
+    vendorService?: any;
 
     constructor(
         id: number = 0,

@@ -11,6 +11,16 @@ import { JwtAuthGuard } from '../../application/guards/jwt-auth.guard';
 export class BookingsController {
     constructor(private readonly bookingService: BookingService) { }
 
+    @Get('availability')
+    async checkAvailability(
+        @Query('vendorServiceId', ParseIntPipe) vendorServiceId: number,
+        @Query('start') start: string,
+        @Query('end') end: string,
+        @Query('quantity', new ParseIntPipe({ optional: true })) quantity: number = 1,
+    ) {
+        return this.bookingService.checkAvailability(vendorServiceId, new Date(start), new Date(end), quantity);
+    }
+
     @Post()
     async create(
         @Body() dto: CreateBookingDto,

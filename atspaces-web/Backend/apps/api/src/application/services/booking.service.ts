@@ -119,4 +119,8 @@ export class BookingService implements IBookingService {
     async findByVendor(vendorId: number): Promise<Booking[]> {
         return this.bookingRepository.findByVendor(vendorId);
     }
+
+    async checkAvailability(vendorServiceId: number, start: Date, end: Date, quantity: number): Promise<boolean> {
+        return this.availabilityRepository.checkAvailability(vendorServiceId, start, end, quantity);
+    }
 }

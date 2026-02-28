@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@repo/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Settings2, Trash2, ShieldCheck, Building2, AlertTriangle } from "lucide-react";
+import { Plus, Settings2, Trash2, ShieldCheck, Building2, AlertTriangle, Layers } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { vendorService } from "@/services/vendor.service";
 
 export default function CapacityPage() {
@@ -23,7 +24,10 @@ export default function CapacityPage() {
     const [formData, setFormData] = useState({
         title: "",
         quantity: "1",
+        price: "0",
+        priceUnit: "hourly",
         description: "",
+        isAvailable: true
     });
 
     const fetchData = async () => {
@@ -42,7 +46,10 @@ export default function CapacityPage() {
                     name: vs.service?.name || "Service",
                     total: vs.maxCapacity,
                     available: vs.maxCapacity, // Simplified available logic
-                    type: vs.service?.name?.replace('_', ' ') || "Service"
+                    type: vs.service?.name?.replace('_', ' ') || "Service",
+                    price: vs.pricePerUnit,
+                    priceUnit: vs.priceUnit,
+                    isAvailable: vs.isAvailable
                 }));
                 setInventory(mapped);
             }
@@ -64,7 +71,10 @@ export default function CapacityPage() {
         setFormData({
             title: item?.name || "",
             quantity: item?.total?.toString() || "1",
+            price: item?.price?.toString() || "0",
+            priceUnit: item?.priceUnit || "hourly",
             description: "",
+            isAvailable: item?.isAvailable ?? true
         });
     };
 
@@ -74,16 +84,28 @@ export default function CapacityPage() {
 
         setIsSubmitting(true);
         try {
-            const requestData = {
-                branchId: branches[0].id,
-                serviceId: selectedItem?.serviceId,
-                requestType: requestType === "add" ? "capacity_change" : requestType === "remove" ? "pause_branch" : "capacity_change",
-                newValue: formData.quantity,
-                reason: formData.description,
-                oldValue: selectedItem?.total?.toString()
-            };
+            if (requestType === "modify" && selectedItem) {
+                // Direct update for simple fields, but capacity might still need approval?
+                // For this task, we assume "detailed resource management" allows immediate updates for some fields.
+                await vendorService.updateService(selectedItem.id, {
+                    maxCapacity: parseInt(formData.quantity),
+                    pricePerUnit: parseFloat(formData.price),
+                    priceUnit: formData.priceUnit,
+                    isAvailable: formData.isAvailable
+                });
+                await fetchData();
+            } else {
+                const requestData = {
+                    branchId: branches[0].id,
+                    serviceId: selectedItem?.serviceId,
+                    requestType: requestType === "add" ? "capacity_change" : requestType === "remove" ? "pause_branch" : "capacity_change",
+                    newValue: formData.quantity,
+                    reason: formData.description,
+                    oldValue: selectedItem?.total?.toString()
+                };
 
-            await vendorService.submitApprovalRequest(requestData);
+                await vendorService.submitApprovalRequest(requestData);
+            }
 
             setSuccess(true);
             setTimeout(() => {
@@ -93,7 +115,6 @@ export default function CapacityPage() {
             }, 2500);
         } catch (err) {
             console.error("Submission failed", err);
-            // Could add error toast here if available
         } finally {
             setIsSubmitting(false);
         }
@@ -104,7 +125,7 @@ export default function CapacityPage() {
             {/* ── Header Section ── */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between glass-card p-6 border-l-4 border-l-primary shadow-sm">
                 <div>
-                    <h1 className="text-3xl font-bold font-outfit tracking-tight text-foreground">Workspaces</h1>
+                    <h1 className="text-3xl font-bold font-outfit tracking-tight text-foreground">Resources & Capacity</h1>
                     <p className="text-muted-foreground mt-1">Manage your active listings and branch capacity.</p>
                     {branches[0] && (
                         <p className="text-xs text-primary font-semibold mt-1 flex items-center gap-1">
@@ -172,6 +193,12 @@ export default function CapacityPage() {
                                             <p className="text-2xl font-bold font-outfit text-foreground">{item.available}<span className="text-sm text-muted-foreground font-medium">/{item.total}</span></p>
                                             <p className="text-[10px] uppercase font-bold text-muted-foreground/60 tracking-tighter">Seats Available</p>
                                         </div>
+                                    </div>
+                                    <div className="mt-2 flex items-center justify-between">
+                                        <div className="text-sm font-bold text-primary">JOD {item.price} / {item.priceUnit}</div>
+                                        <Badge variant={item.isAvailable ? "outline" : "destructive"} className={item.isAvailable ? "text-emerald-500 border-emerald-500/30" : ""}>
+                                            {item.isAvailable ? "Active" : "Paused"}
+                                        </Badge>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="pb-4">
@@ -264,6 +291,35 @@ export default function CapacityPage() {
                                             className="h-11 bg-muted/50 border-white/5 focus:border-primary/50 transition-all font-medium"
                                             required
                                         />
+                                    </div>
+                                )}
+
+                                {requestType === "modify" && (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="price" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Price</Label>
+                                            <Input
+                                                id="price"
+                                                name="price"
+                                                type="number"
+                                                value={formData.price}
+                                                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                                className="h-11 bg-muted/50 border-white/5"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="available" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</Label>
+                                            <div className="flex items-center gap-2 h-11 bg-muted/50 border border-white/5 rounded-md px-3">
+                                                <input
+                                                    id="available"
+                                                    type="checkbox"
+                                                    checked={formData.isAvailable}
+                                                    onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })}
+                                                    className="accent-primary size-4"
+                                                />
+                                                <span className="text-sm font-medium">Visible to Public</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
 

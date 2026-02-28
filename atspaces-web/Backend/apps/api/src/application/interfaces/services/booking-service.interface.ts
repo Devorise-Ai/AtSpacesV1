@@ -9,4 +9,5 @@ export interface IBookingService {
     confirmPayment(bookingId: number): Promise<void>;
     findByCustomer(customerId: number): Promise<Booking[]>;
     findByVendor(vendorId: number): Promise<Booking[]>;
+    checkAvailability(vendorServiceId: number, start: Date, end: Date, quantity: number): Promise<boolean>;
 }

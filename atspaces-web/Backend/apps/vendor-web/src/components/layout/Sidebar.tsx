@@ -15,13 +15,15 @@ import {
     LayoutGrid,
     ChevronRight,
     ChevronLeft,
-    X
+    X,
+    Calendar
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
 const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
     { name: "Capacity", href: "/capacity", icon: Settings },
+    { name: "Calendar", href: "/calendar", icon: Calendar },
     { name: "Bookings", href: "/bookings", icon: ClipboardList },
     { name: "Reports", href: "/reports", icon: BarChart2 },
     { name: "Profile", href: "/profile", icon: UserCircle },

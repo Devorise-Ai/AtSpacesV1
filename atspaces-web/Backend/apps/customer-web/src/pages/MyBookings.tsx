@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, MapPin, Clock, CheckCircle2, XCircle, AlertCircle, RefreshCw, ArrowLeft, X } from 'lucide-react';
+import { Calendar, MapPin, Clock, CheckCircle2, XCircle, AlertCircle, RefreshCw, ArrowLeft, X, QrCode } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -26,6 +26,12 @@ const formatTime = (iso: string) => {
     return d.toLocaleTimeString('en-JO', { hour: '2-digit', minute: '2-digit' });
 };
 
+const formatServiceName = (name: string | undefined) => {
+    if (!name) return '';
+    return name.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+};
+
+
 const BookingSkeleton = () => (
     <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
@@ -48,6 +54,7 @@ const MyBookings = () => {
     const [filter, setFilter] = useState<BookingStatus | 'ALL'>('ALL');
     const [cancellingId, setCancellingId] = useState<number | null>(null);
     const [confirmCancelId, setConfirmCancelId] = useState<number | null>(null);
+    const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -265,6 +272,20 @@ const MyBookings = () => {
                                                                 View Space
                                                             </button>
                                                         </Link>
+                                                        {booking.status === 'CONFIRMED' && (
+                                                            <button
+                                                                onClick={() => setSelectedTicketId(booking.id)}
+                                                                style={{
+                                                                    fontSize: '0.85rem', padding: '0.4rem 1rem',
+                                                                    borderRadius: '8px', border: '1px solid var(--primary)',
+                                                                    background: 'rgba(255, 91, 4, 0.05)', color: 'var(--primary)',
+                                                                    cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600,
+                                                                    display: 'flex', alignItems: 'center', gap: '0.4rem'
+                                                                }}
+                                                            >
+                                                                <QrCode size={16} /> Ticket
+                                                            </button>
+                                                        )}
                                                         <button
                                                             onClick={() => setConfirmCancelId(booking.id)}
                                                             disabled={cancellingId === booking.id}
@@ -344,7 +365,71 @@ const MyBookings = () => {
                         </motion.div>
                     </>
                 )}
+
+                {/* Ticket / QR Code Modal */}
+                {selectedTicketId !== null && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            onClick={() => setSelectedTicketId(null)}
+                            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 110, backdropFilter: 'blur(8px)' }}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }}
+                            style={{
+                                position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                                zIndex: 111, maxWidth: '400px', width: '90%'
+                            }}
+                        >
+                            {/* Ticket Visual */}
+                            <div style={{ background: '#fff', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
+                                <div style={{ background: 'var(--primary)', padding: '1.5rem', color: 'white', textAlign: 'center' }}>
+                                    <h3 style={{ margin: 0, fontSize: '1.25rem' }}>E-Ticket</h3>
+                                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', opacity: 0.8 }}>Show this at the reception</p>
+                                </div>
+                                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                                    <div style={{ padding: '1.5rem', border: '2px dashed #ddd', borderRadius: '16px', display: 'inline-block', marginBottom: '1.5rem' }}>
+                                        {/* Mock QR Code */}
+                                        <div style={{ width: '180px', height: '180px', background: '#000', borderRadius: '8px', display: 'flex', flexWrap: 'wrap', padding: '10px' }}>
+                                            {Array.from({ length: 144 }).map((_, i) => (
+                                                <div key={i} style={{ width: '13.33px', height: '13.33px', background: Math.random() > 0.5 ? '#fff' : '#000' }} />
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div style={{ textAlign: 'left', background: '#f9f9f9', padding: '1rem', borderRadius: '12px', border: '1px solid #eee' }}>
+                                        {(() => {
+                                            const b = bookings.find(x => x.id === selectedTicketId);
+                                            if (!b) return null;
+                                            return (
+                                                <>
+                                                    <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#111', marginBottom: '0.25rem' }}>{b.branch?.name}</div>
+                                                    <div style={{ color: '#666', fontSize: '0.9rem', marginBottom: '0.75rem' }}>{formatServiceName(b.vendorService?.service?.name)}</div>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                                                        <span style={{ color: '#888' }}>Date:</span>
+                                                        <span style={{ fontWeight: 600, color: '#333' }}>{formatDate(b.startTime)}</span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                                                        <span style={{ color: '#888' }}>Time:</span>
+                                                        <span style={{ fontWeight: 600, color: '#333' }}>{formatTime(b.startTime)} - {formatTime(b.endTime)}</span>
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setSelectedTicketId(null)}
+                                    style={{ width: '100%', padding: '1.25rem', border: 'none', borderTop: '1px solid #eee', background: '#fff', color: 'var(--primary)', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                                >
+                                    Dismiss
+                                </button>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
             </AnimatePresence>
+
         </div>
     );
 };

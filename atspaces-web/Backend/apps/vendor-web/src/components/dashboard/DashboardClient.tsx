@@ -8,6 +8,20 @@ import { Card, CardHeader, CardContent } from "@repo/ui/card";
 import { CheckCircle2, XCircle, Clock, ArrowRight, TrendingUp, TrendingDown, Users, Building2, CalendarCheck } from "lucide-react";
 import { vendorService } from "@/services/vendor.service";
 import { bookingService } from "@/services/booking.service";
+import {
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    BarChart,
+    Bar,
+    Cell,
+    PieChart,
+    Pie
+} from "recharts";
 
 // Mock data (Fallback)
 const VENDOR_NAME = "Yazeed";
@@ -135,6 +149,90 @@ export default function DashboardClient() {
                 <MetricCard label="Total Branches" value={stats?.totalBranches || 0} sub={`${stats?.activeBranches || 0} active`} icon={Building2} trend="up" />
                 <MetricCard label="Total Services" value={stats?.totalServices || 0} sub="Across branches" icon={Users} trend="neutral" />
                 <MetricCard label="Pending Items" value={stats?.pendingBranches || 0} sub="Action required" icon={Clock} trend="neutral" />
+            </div>
+
+            {/* ── Revenue & Analytics Charts ── */}
+            <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
+                {/* Revenue Trend */}
+                <Card className="lg:col-span-2 glass-card">
+                    <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                            <h2 className="font-semibold font-outfit text-foreground text-lg">Revenue Trend (Last 7 Days)</h2>
+                            <TrendingUp className="size-4 text-emerald-500" />
+                        </div>
+                    </CardHeader>
+                    <CardContent className="h-[300px] pt-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={stats?.revenueData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                                <XAxis
+                                    dataKey="name"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: 'currentColor', opacity: 0.5, fontSize: 12 }}
+                                />
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: 'currentColor', opacity: 0.5, fontSize: 12 }}
+                                />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px', color: '#fff' }}
+                                    itemStyle={{ color: 'var(--primary)' }}
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="value"
+                                    stroke="var(--primary)"
+                                    strokeWidth={3}
+                                    fillOpacity={1}
+                                    fill="url(#colorRevenue)"
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+
+                {/* Service Distribution */}
+                <Card className="glass-card">
+                    <CardHeader className="pb-2">
+                        <h2 className="font-semibold font-outfit text-foreground text-lg">Service Distribution</h2>
+                    </CardHeader>
+                    <CardContent className="h-[300px] pt-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={stats?.serviceDistribution || []}
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                >
+                                    {(stats?.serviceDistribution || []).map((entry: any, index: number) => (
+                                        <Cell key={`cell-${index}`} fill={[`var(--primary)`, '#3b82f6', '#8b5cf6', '#ec4899'][index % 4]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px', color: '#fff' }}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
+                        <div className="mt-4 flex flex-wrap gap-4 justify-center">
+                            {(stats?.serviceDistribution || []).map((s: any, i: number) => (
+                                <div key={s.name} className="flex items-center gap-2">
+                                    <div className="size-2 rounded-full" style={{ backgroundColor: [`var(--primary)`, '#3b82f6', '#8b5cf6', '#ec4899'][i % 4] }} />
+                                    <span className="text-xs text-muted-foreground">{s.name.replace('_', ' ')}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* ── Today's Breakdown + Upcoming Check-ins ── */}

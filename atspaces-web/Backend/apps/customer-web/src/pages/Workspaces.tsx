@@ -42,7 +42,9 @@ const WorkspacesPage = () => {
     const [loading, setLoading] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
     const [sortBy, setSortBy] = useState<SortOption>('default');
+    const [minPrice, setMinPrice] = useState<number>(0);
     const [maxPrice, setMaxPrice] = useState<number>(200);
+    const [minRating, setMinRating] = useState<number>(0);
     const [showSortMenu, setShowSortMenu] = useState(false);
     const [verifiedOnly, setVerifiedOnly] = useState(false);
     const [date, setDate] = useState('');
@@ -144,13 +146,14 @@ const WorkspacesPage = () => {
                 space.type === selectedCategory ||
                 space.type === backendCategory;
 
-            const matchesPrice = space.price <= maxPrice;
+            const matchesPrice = space.price >= minPrice && space.price <= maxPrice;
             const matchesVerified = !verifiedOnly || (space as any).verified;
+            const matchesRating = space.rating >= minRating;
 
             const matchesCapacity = guests === '' || Number(space.capacity) >= guests;
             const matchesAmenities = selectedAmenities.length === 0 || selectedAmenities.every(a => space.amenities.includes(a));
 
-            return matchesSearch && matchesCategory && matchesPrice && matchesVerified && matchesCapacity && matchesAmenities;
+            return matchesSearch && matchesCategory && matchesPrice && matchesVerified && matchesRating && matchesCapacity && matchesAmenities;
         })
         .sort((a, b) => {
             switch (sortBy) {
@@ -170,14 +173,16 @@ const WorkspacesPage = () => {
         setSearchTerm('');
         setSelectedCategory('All');
         setSortBy('default');
+        setMinPrice(0);
         setMaxPrice(maxPriceInData);
+        setMinRating(0);
         setVerifiedOnly(false);
         setDate('');
         setGuests('');
         setSelectedAmenities([]);
     };
 
-    const hasActiveFilters = searchTerm || selectedCategory !== 'All' || sortBy !== 'default' || maxPrice < maxPriceInData || verifiedOnly || date || guests !== '' || selectedAmenities.length > 0;
+    const hasActiveFilters = searchTerm || selectedCategory !== 'All' || sortBy !== 'default' || minPrice > 0 || maxPrice < maxPriceInData || minRating > 0 || verifiedOnly || date || guests !== '' || selectedAmenities.length > 0;
 
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -293,21 +298,59 @@ const WorkspacesPage = () => {
                                     </div>
 
                                     {/* Price Range */}
-                                    <div style={{ marginBottom: '1.5rem' }}>
-                                        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
-                                            Max Price: <strong style={{ color: 'var(--primary)' }}>JOD {maxPrice}/hr</strong>
+                                    <div style={{ marginBottom: '2rem' }}>
+                                        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '1rem' }}>
+                                            Price Range: <strong style={{ color: 'var(--primary)' }}>JOD {minPrice} - JOD {maxPrice} / hr</strong>
                                         </label>
-                                        <input
-                                            type="range"
-                                            min={1}
-                                            max={maxPriceInData || 200}
-                                            value={maxPrice}
-                                            onChange={(e) => setMaxPrice(Number(e.target.value))}
-                                            style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer' }}
-                                        />
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                                            <span>JOD 1</span>
-                                            <span>JOD {maxPriceInData || 200}</span>
+                                        <div style={{ display: 'flex', gap: '1rem' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Min Price</span>
+                                                <input
+                                                    type="range"
+                                                    min={0}
+                                                    max={maxPrice}
+                                                    value={minPrice}
+                                                    onChange={(e) => setMinPrice(Number(e.target.value))}
+                                                    style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                                                />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Max Price</span>
+                                                <input
+                                                    type="range"
+                                                    min={minPrice}
+                                                    max={maxPriceInData || 200}
+                                                    value={maxPrice}
+                                                    onChange={(e) => setMaxPrice(Number(e.target.value))}
+                                                    style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Rating Filter */}
+                                    <div style={{ marginBottom: '2rem' }}>
+                                        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.75rem' }}>Minimum Rating</label>
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            {[0, 3, 4, 4.5].map(rating => (
+                                                <button
+                                                    key={rating}
+                                                    onClick={() => setMinRating(rating)}
+                                                    style={{
+                                                        padding: '0.4rem 1rem',
+                                                        borderRadius: '12px',
+                                                        fontSize: '0.85rem',
+                                                        fontWeight: 600,
+                                                        background: minRating === rating ? 'rgba(251, 191, 36, 0.15)' : 'rgba(255,255,255,0.05)',
+                                                        color: minRating === rating ? '#fbbf24' : 'var(--text-secondary)',
+                                                        border: `1px solid ${minRating === rating ? '#fbbf24' : 'rgba(255,255,255,0.1)'}`,
+                                                        cursor: 'pointer',
+                                                        display: 'flex', alignItems: 'center', gap: '0.3rem'
+                                                    }}
+                                                >
+                                                    {rating === 0 ? 'Any' : <><Star size={14} fill={minRating === rating ? "currentColor" : "none"} /> {rating}+</>}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
 

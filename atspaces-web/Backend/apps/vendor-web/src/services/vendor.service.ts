@@ -30,4 +30,19 @@ export const vendorService = {
         const response = await api.post("/vendor/approval-requests", data);
         return response.data;
     },
+
+    getAvailability: async (serviceId: number) => {
+        const response = await api.get(`/vendor/availability/${serviceId}`);
+        return response.data;
+    },
+
+    toggleAvailabilityBlock: async (id: number) => {
+        const response = await api.post("/vendor/availability/toggle-block", { availabilityId: id });
+        return response.data;
+    },
+
+    updateService: async (id: number, data: any) => {
+        const response = await api.patch(`/vendor/services/${id}`, data);
+        return response.data;
+    },
 };

@@ -42,9 +42,20 @@ export class PrismaBookingRepository implements IBookingRepository {
                     }
                 }
             },
+            include: {
+                vendorService: {
+                    include: {
+                        service: true
+                    }
+                }
+            },
             orderBy: { startTime: 'asc' }
         });
-        return bookings.map(b => this.mapPrismaToEntity(b));
+        return bookings.map(b => {
+            const entity = this.mapPrismaToEntity(b);
+            entity.vendorService = b.vendorService;
+            return entity;
+        });
     }
 
     async save(booking: Booking): Promise<void> {

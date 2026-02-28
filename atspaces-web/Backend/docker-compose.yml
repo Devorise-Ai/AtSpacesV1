@@ -1,26 +1,103 @@
-version: '3.8'
-
 services:
-  postgres:
+  # ─── Infrastructure ───────────────────────────────────
+  db:
     image: postgres:16-alpine
-    container_name: atspaces-postgres
+    container_name: atspaces-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: atspaces
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
     container_name: atspaces-redis
     ports:
-      - '6379:6379'
+      - "6379:6379"
     volumes:
       - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ─── API (NestJS Backend) ─────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: atspaces-api
+    command: npx turbo run dev --filter=api
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/atspaces
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PORT=3001
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─── Customer Web (Vite + React) ──────────────────────
+  customer-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: atspaces-customer-web
+    command: npx turbo run dev --filter=customer-web
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3001/api
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # ─── Vendor Web (Next.js) ─────────────────────────────
+  vendor-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: atspaces-vendor-web
+    command: npx turbo run dev --filter=atspaces-vendor-web
+    ports:
+      - "3002:3002"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001/api
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # ─── Admin Web (Next.js) ──────────────────────────────
+  admin-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: atspaces-admin-web
+    command: npx turbo run dev --filter=atspaces-admin-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001/api
+    depends_on:
+      - api
     restart: unless-stopped
 
 volumes:

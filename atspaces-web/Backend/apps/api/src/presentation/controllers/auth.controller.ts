@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req, Res, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from '../../application/services/auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -21,7 +21,7 @@ export class AuthController {
     async login(@Body() loginDto: any) {
         const user = await this.authService.validateUser(loginDto.email, loginDto.password);
         if (!user) {
-            return { message: 'Invalid credentials' };
+            throw new UnauthorizedException('Invalid email or password');
         }
         return this.authService.login(user);
     }
@@ -40,9 +40,12 @@ export class AuthController {
         const user = await this.authService.validateGoogleUser(req.user);
         const loginResult = await this.authService.login(user);
 
-        // In a real app, you'd probably redirect to the frontend with the token in a query param
-        // or set a cookie. For now, we return the JSON.
-        return res.json(loginResult);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const userEncoded = encodeURIComponent(JSON.stringify(loginResult.user));
+        // Redirect to the frontend with token and user in query params
+        return res.redirect(
+            `${frontendUrl}/auth/callback?token=${loginResult.access_token}&user=${userEncoded}`
+        );
     }
 
     @Get('profile')

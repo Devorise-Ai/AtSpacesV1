@@ -1,10 +1,97 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Star, MapPin, Users, Wifi, Coffee, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-import { WORKSPACES } from '../data/workspaces';
+import { useIsMobile } from '../hooks/useMediaQuery';
+import { publicService } from '../services/public.service';
+import WorkspaceCardSkeleton from './WorkspaceCardSkeleton';
+import type { WorkspaceCard } from '../types';
 
 const Workspaces = () => {
+    const isMobile = useIsMobile();
+    const [workspaces, setWorkspaces] = useState<WorkspaceCard[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchWorkspaces = async () => {
+            try {
+                setLoading(true);
+                console.log('[Workspaces] Fetching branches from API...');
+                const branches = await publicService.listBranches();
+                console.log('[Workspaces] Raw API response:', branches);
+                console.log('[Workspaces] Number of branches:', branches?.length || 0);
+
+                if (!branches || branches.length === 0) {
+                    console.warn('[Workspaces] No branches returned from API!');
+                    setWorkspaces([]);
+                    return;
+                }
+
+                // Flatten branches and their services into the UI format
+                const flattened: WorkspaceCard[] = branches.flatMap((branch: any) =>
+                    (branch.vendorServices || []).map((vs: any) => ({
+                        id: `${branch.id}-${vs.id}`,
+                        branchId: branch.id,
+                        serviceId: vs.id,
+                        title: `${branch.name} - ${vs.service.name}`,
+                        location: branch.address || branch.city || 'Amman, Jordan',
+                        rating: branch.rating || 4.8,
+                        reviews: branch.reviewsCount || 42,
+                        price: vs.pricePerUnit,
+                        capacity: String(vs.maxCapacity || '1'),
+                        image: branch.images?.[0] || 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80',
+                        amenities: branch.branchFacilities?.map((bf: any) => bf.facility.name) || [],
+                        type: vs.service.name,
+                        description: branch.description,
+                        lat: branch.latitude || 31.95,
+                        lng: branch.longitude || 35.91
+                    }))
+                );
+
+                console.log('[Workspaces] Flattened workspaces:', flattened);
+                setWorkspaces(flattened);
+            } catch (err) {
+                console.error('[Workspaces] Failed to fetch workspaces:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchWorkspaces();
+    }, []);
+
+    if (loading) {
+        return (
+            <section id="workspaces" style={{ padding: '6rem 0' }}>
+                <div className="container">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '3rem' }}>
+                        <div>
+                            <h2 className="section-title" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
+                                Premium <span style={{ color: 'var(--primary)' }}>Workspaces</span>
+                            </h2>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '600px' }}>
+                                Discover our top-rated spaces designed for productivity, collaboration, and focus.
+                            </p>
+                        </div>
+                    </div>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                        gap: '2rem'
+                    }}>
+                        {[1, 2, 3].map((i) => (
+                            <WorkspaceCardSkeleton key={i} />
+                        ))}
+                    </div>
+                </div>
+            </section>
+        );
+    }
+
+    if (workspaces.length === 0) {
+        return null;
+    }
+
     return (
         <section id="workspaces" style={{ padding: '6rem 0' }}>
             <div className="container">
@@ -18,16 +105,18 @@ const Workspaces = () => {
                         </p>
                     </div>
                     {/* Desktop View All Link */}
-                    <Link to="/workspaces" style={{
-                        display: window.innerWidth > 768 ? 'flex' : 'none',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        color: 'var(--primary)',
-                        fontWeight: 600,
-                        textDecoration: 'none'
-                    }}>
-                        View All Spaces <ArrowRight size={18} />
-                    </Link>
+                    {!isMobile && (
+                        <Link to="/workspaces" style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            color: 'var(--primary)',
+                            fontWeight: 600,
+                            textDecoration: 'none'
+                        }}>
+                            View All Spaces <ArrowRight size={18} />
+                        </Link>
+                    )}
                 </div>
 
                 <div style={{
@@ -36,7 +125,7 @@ const Workspaces = () => {
                     gap: '2rem',
                     marginBottom: '3rem'
                 }}>
-                    {WORKSPACES.slice(0, 3).map((space, index) => (
+                    {workspaces.slice(0, 3).map((space, index) => (
                         <motion.div
                             key={space.id}
                             initial={{ opacity: 0, y: 30 }}
@@ -112,7 +201,7 @@ const Workspaces = () => {
                                         <span style={{ fontSize: '1.25rem', fontWeight: 700 }}>JOD {space.price}</span>
                                         <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}> / hour</span>
                                     </div>
-                                    <Link to={`/workspaces/${space.id}`} style={{ textDecoration: 'none' }}>
+                                    <Link to={`/workspaces/${space.branchId}?service=${space.type}`} style={{ textDecoration: 'none' }}>
                                         <button style={{
                                             padding: '0.5rem 1rem',
                                             background: 'rgba(255, 91, 4, 0.1)',

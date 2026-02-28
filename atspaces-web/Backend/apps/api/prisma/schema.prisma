@@ -97,6 +97,7 @@ model User {
   requestsSubmitted ApprovalRequest[] @relation("VendorRequests")
   requestsReviewed  ApprovalRequest[] @relation("AdminReviews")
   otpSessions      OtpSession[]
+  aiChatMessages   AIChatMessage[]
 
   @@index([email, role])
   @@index([phoneNumber])
@@ -325,3 +326,17 @@ model ServiceFeature {
   @@index([featureId])
   @@map("service_features")
 }
+
+model AIChatMessage {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  role      String   @db.VarChar(50) // 'user' or 'assistant'
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt(sort: Asc)])
+  @@map("ai_chat_messages")
+}
+

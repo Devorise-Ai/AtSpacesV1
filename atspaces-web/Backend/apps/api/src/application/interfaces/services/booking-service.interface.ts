@@ -8,4 +8,5 @@ export interface IBookingService {
     markNoShow(bookingId: number, vendorId: number): Promise<void>;
     confirmPayment(bookingId: number): Promise<void>;
     findByCustomer(customerId: number): Promise<Booking[]>;
+    findByVendor(vendorId: number): Promise<Booking[]>;
 }

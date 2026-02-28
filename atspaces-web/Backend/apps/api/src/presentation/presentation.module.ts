@@ -9,6 +9,7 @@ import { AdminController } from './controllers/admin/admin.controller';
 import { FacilitiesController } from './controllers/facilities.controller';
 import { FeaturesController } from './controllers/features.controller';
 import { ServicesController } from './controllers/services.controller';
+import { AiController } from './controllers/ai.controller';
 import { ApplicationModule } from '../application/application.module';
 import { ChatGateway } from './gateways/chat.gateway';
 import { InfrastructureModule } from '../infrastructure/infrastructure.module';
@@ -26,6 +27,7 @@ import { AuthModule } from '../application/auth.module';
         ServicesController,
         // Customer (JWT)
         BookingsController,
+        AiController,
         // Vendor (JWT)
         VendorApprovalController,
         VendorController,

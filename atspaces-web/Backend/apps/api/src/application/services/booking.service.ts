@@ -115,4 +115,8 @@ export class BookingService implements IBookingService {
     async findByCustomer(customerId: number): Promise<Booking[]> {
         return this.bookingRepository.findByCustomer(customerId);
     }
+
+    async findByVendor(vendorId: number): Promise<Booking[]> {
+        return this.bookingRepository.findByVendor(vendorId);
+    }
 }

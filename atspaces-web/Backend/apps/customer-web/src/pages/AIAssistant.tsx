@@ -1,25 +1,195 @@
-import { useState } from 'react';
-import { MessageSquare, Send, Mic, Volume2, Globe, Plus, ChevronLeft, Moon, Sun, User, Clock } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { MessageSquare, Send, Mic, Volume2, Globe, Plus, ChevronLeft, Moon, Sun, User, Clock, Loader2, WifiOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { io, Socket } from 'socket.io-client';
+import api from '../lib/api';
+import { getToken } from '../lib/token';
+
+// ── Backend URL ────────────────────────────────────────
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+
+// ── Types ──────────────────────────────────────────────
+interface Message {
+    id: string;
+    role: 'user' | 'assistant';
+    text: string;
+    streaming?: boolean;
+}
+
+type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
+
+// ── Stable session ID per browser tab ─────────────────
+function getSessionId(): string {
+    let sid = sessionStorage.getItem('atspaces_chat_session');
+    if (!sid) {
+        sid = `sess_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        sessionStorage.setItem('atspaces_chat_session', sid);
+    }
+    return sid;
+}
 
 const AIAssistantPage = () => {
     const { theme, toggleTheme } = useTheme();
+    const token = getToken();
     const [input, setInput] = useState('');
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [messages, setMessages] = useState<Message[]>([
+        {
+            id: 'welcome',
+            role: 'assistant',
+            text: "Hello! 👋 I'm your AtSpaces Assistant, powered by AI. Ask me about workspaces, pricing, availability in any city, or I can book a space for you right now!",
+        },
+    ]);
+    const [isThinking, setIsThinking] = useState(false);
+    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-    const historyItems = [
-        { title: 'Workspace Amman', time: '2 hours ago' },
-        { title: 'Meeting Room for 4', time: 'Yesterday' },
-        { title: 'High-speed Wi-Fi desks', time: 'Feb 20' }
-    ];
+    const socketRef = useRef<Socket | null>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const sessionId = useRef(getSessionId());
+    const streamingIdRef = useRef<string | null>(null);
+
+    // ── Fetch History ──────────────────────────────────
+    useEffect(() => {
+        const fetchHistory = async () => {
+            if (!token) return;
+            setIsLoadingHistory(true);
+            try {
+                const response = await api.get('/ai/history');
+                const history = response.data;
+                if (history && history.length > 0) {
+                    setMessages(history);
+                }
+            } catch (error) {
+                console.error("Failed to load chat history", error);
+            } finally {
+                setIsLoadingHistory(false);
+            }
+        };
+
+        fetchHistory();
+    }, [token]);
+
+    // ── Auto-scroll ────────────────────────────────────
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    // ── Socket connection ──────────────────────────────
+    useEffect(() => {
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling'],
+            reconnectionAttempts: 5,
+            reconnectionDelay: 2000,
+        });
+        socketRef.current = socket;
+
+        socket.on('connect', () => {
+            setConnectionStatus('connected');
+        });
+
+        socket.on('disconnect', () => {
+            setConnectionStatus('disconnected');
+        });
+
+        socket.on('connect_error', () => {
+            setConnectionStatus('disconnected');
+        });
+
+        socket.on('messageChunk', ({ chunk }: { chunk: string }) => {
+            if (!streamingIdRef.current) return;
+            const id = streamingIdRef.current;
+            setMessages(prev =>
+                prev.map(m =>
+                    m.id === id ? { ...m, text: m.text + chunk } : m
+                )
+            );
+        });
+
+        socket.on('messageComplete', () => {
+            if (streamingIdRef.current) {
+                const id = streamingIdRef.current;
+                setMessages(prev =>
+                    prev.map(m => m.id === id ? { ...m, streaming: false } : m)
+                );
+                streamingIdRef.current = null;
+            }
+            setIsThinking(false);
+        });
+
+        socket.on('messageError', ({ error }: { error: string }) => {
+            const streamingId = streamingIdRef.current;
+            streamingIdRef.current = null;
+            setIsThinking(false);
+            setMessages(prev => [
+                ...prev.filter(m => m.id !== streamingId),
+                {
+                    id: Date.now().toString(),
+                    role: 'assistant',
+                    text: `⚠️ ${error || 'Something went wrong. Please try again.'}`,
+                },
+            ]);
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
+
+    const handleSend = useCallback((textOverride?: string) => {
+        const text = textOverride || input.trim();
+        if (!text || isThinking) return;
+
+        const userMsg: Message = {
+            id: Date.now().toString(),
+            role: 'user',
+            text,
+        };
+
+        const assistantId = `stream_${Date.now()}`;
+        streamingIdRef.current = assistantId;
+
+        const assistantPlaceholder: Message = {
+            id: assistantId,
+            role: 'assistant',
+            text: '',
+            streaming: true,
+        };
+
+        setMessages(prev => [...prev, userMsg, assistantPlaceholder]);
+        setInput('');
+        setIsThinking(true);
+
+        if (socketRef.current?.connected) {
+            socketRef.current.emit('sendMessage', {
+                message: text,
+                sessionId: sessionId.current,
+                token: token || undefined
+            });
+        } else {
+            streamingIdRef.current = null;
+            setIsThinking(false);
+            setMessages(prev => [
+                ...prev.filter(m => m.id !== assistantId),
+                {
+                    id: Date.now().toString(),
+                    role: 'assistant',
+                    text: "⚠️ I can't reach the server right now. Please make sure the backend is running on port 3001.",
+                },
+            ]);
+        }
+    }, [input, isThinking]);
 
     const suggestionButtons = [
         "Find meeting rooms in Amman",
         "Check private office pricing",
         "How does verification work?"
     ];
+
+    const statusColor =
+        connectionStatus === 'connected' ? '#22c55e' :
+            connectionStatus === 'connecting' ? '#f59e0b' : '#ef4444';
 
     return (
         <div style={{
@@ -43,16 +213,10 @@ const AIAssistantPage = () => {
                 zIndex: 1001
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div
-                        className="mobile-only"
-                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        style={{ cursor: 'pointer', marginRight: '0.5rem' }}
-                    >
-                        {isSidebarOpen ? <Plus size={24} style={{ transform: 'rotate(45deg)' }} /> : <MessageSquare size={24} />}
-                    </div>
-                    <Link to="/" className="desktop-only" style={{
+                    <Link to="/" style={{
                         color: 'var(--text-primary)',
                         textDecoration: 'none',
+                        display: 'flex',
                         alignItems: 'center',
                         gap: '0.5rem',
                         fontSize: '0.9rem',
@@ -69,6 +233,12 @@ const AIAssistantPage = () => {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: '1rem' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: statusColor }} />
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            {connectionStatus === 'connected' ? 'Live' : connectionStatus === 'connecting' ? 'Connecting' : 'Offline'}
+                        </span>
+                    </div>
                     <Globe size={18} style={{ cursor: 'pointer', opacity: 0.7 }} />
                     <div onClick={toggleTheme} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.7 }}>
                         {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
@@ -89,216 +259,171 @@ const AIAssistantPage = () => {
                 </div>
             </header>
 
-            <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
-                {/* Mobile Overlay */}
-                <AnimatePresence>
-                    {isSidebarOpen && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setIsSidebarOpen(false)}
-                            className="ai-overlay"
-                        />
-                    )}
-                </AnimatePresence>
-
-                {/* Sidebar */}
-                <aside
-                    className={`ai-sidebar ${isSidebarOpen ? 'open' : ''}`}
-                    style={{
-                        width: '260px',
-                        borderRight: '1px solid var(--border)',
-                        padding: '1.25rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        background: 'rgba(0,0,0,0.02)',
-                        flexShrink: 0
-                    }}
-                >
-                    <button className="btn-primary" style={{
-                        padding: '0.875rem',
-                        width: '100%',
-                        fontSize: '0.95rem',
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.75rem',
-                        marginBottom: '2rem',
-                        borderRadius: '12px'
-                    }}>
-                        <Plus size={18} />
-                        New Chat
-                    </button>
-
-                    <div style={{ flex: 1, overflowY: 'auto' }}>
-                        <div style={{
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                            color: 'var(--text-secondary)',
-                            letterSpacing: '1px',
-                            opacity: 0.5,
-                            marginBottom: '1.25rem',
-                            textTransform: 'uppercase'
-                        }}>
-                            Recent History
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            {historyItems.map((item, i) => (
-                                <motion.div
-                                    key={i}
-                                    whileHover={{ background: 'var(--bg-input)', x: 4 }}
-                                    style={{
-                                        padding: '0.75rem 1rem',
-                                        borderRadius: '10px',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s'
-                                    }}
-                                >
-                                    <div style={{ fontSize: '0.9rem', fontWeight: 500, marginBottom: '0.25rem' }}>{item.title}</div>
-                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem', opacity: 0.6 }}>
-                                        <Clock size={10} />
-                                        {item.time}
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </div>
-                </aside>
-
+            <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', justifyContent: 'center' }}>
                 {/* Main Content Area */}
                 <main className="ai-main-content" style={{
                     flex: 1,
                     display: 'flex',
                     flexDirection: 'column',
                     position: 'relative',
-                    padding: '2rem',
-                    overflowY: 'auto'
+                    padding: '1rem',
+                    overflow: 'hidden',
+                    maxWidth: '1200px',
+                    width: '100%'
                 }}>
-                    {/* Empty State / Welcome Content */}
                     <div style={{
                         flex: 1,
+                        overflowY: 'auto',
+                        padding: '1rem',
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        textAlign: 'center',
-                        paddingBottom: '160px'
+                        gap: '1.5rem',
+                        maxWidth: '900px',
+                        width: '100%',
+                        margin: '0 auto'
                     }}>
-                        {/* Centered Logo with Glow */}
-                        <div style={{ position: 'relative', marginBottom: '2rem' }}>
+                        {isLoadingHistory ? (
+                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Loader2 size={32} className="animate-spin" color="var(--primary)" />
+                            </div>
+                        ) : messages.length === 1 && messages[0].id === 'welcome' && (
                             <div style={{
-                                position: 'absolute',
-                                top: '50%',
-                                left: '50%',
-                                transform: 'translate(-50%, -50%)',
-                                width: '120px',
-                                height: '120px',
-                                background: 'var(--primary-glow)',
-                                filter: 'blur(40px)',
-                                borderRadius: '50%',
-                                zIndex: 0
-                            }} />
-                            <div style={{
-                                width: '70px', // Slightly smaller
-                                height: '70px',
-                                background: 'var(--primary)',
-                                borderRadius: '20px',
+                                flex: 1,
                                 display: 'flex',
+                                flexDirection: 'column',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                position: 'relative',
-                                zIndex: 1,
-                                boxShadow: '0 10px 30px var(--primary-glow)'
+                                textAlign: 'center',
+                                paddingBottom: '80px'
                             }}>
-                                <MessageSquare size={32} color="white" fill="white" />
-                            </div>
-                        </div>
+                                <div style={{ position: 'relative', marginBottom: '2rem' }}>
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        width: '120px',
+                                        height: '120px',
+                                        background: 'var(--primary-glow)',
+                                        filter: 'blur(40px)',
+                                        borderRadius: '50%',
+                                        zIndex: 0
+                                    }} />
+                                    <div style={{
+                                        width: '70px',
+                                        height: '70px',
+                                        background: 'var(--primary)',
+                                        borderRadius: '20px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        position: 'relative',
+                                        zIndex: 1,
+                                        boxShadow: '0 10px 30px var(--primary-glow)'
+                                    }}>
+                                        <MessageSquare size={32} color="white" fill="white" />
+                                    </div>
+                                </div>
 
-                        <h1 className="ai-welcome-title" style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '0.75rem' }}>How can I help you today?</h1>
-                        <p className="ai-welcome-desc" style={{
-                            fontSize: '1.1rem',
-                            color: 'var(--text-secondary)',
-                            maxWidth: '550px',
-                            lineHeight: 1.5,
-                            marginBottom: '2.5rem'
-                        }}>
-                            I can <span style={{ color: 'var(--primary)' }}>help you</span> find workspaces, check availability, or explain our pricing plans instantly.
-                        </p>
+                                <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '0.75rem' }}>How can I help you?</h1>
+                                <p style={{
+                                    fontSize: '1.1rem',
+                                    color: 'var(--text-secondary)',
+                                    maxWidth: '550px',
+                                    lineHeight: 1.5,
+                                    marginBottom: '2.5rem'
+                                }}>
+                                    I can help you find workspaces, check availability, or explain our pricing plans instantly.
+                                </p>
 
-                        {/* Suggestion Grid */}
-                        <div className="ai-suggestion-grid" style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            width: '100%',
-                            maxWidth: '700px'
-                        }}>
-                            <div className="ai-suggestion-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', width: '100%' }}>
-                                <motion.div
-                                    whileHover={{ scale: 1.02, background: 'var(--bg-input)', borderColor: 'var(--primary)' }}
-                                    className="glass-panel ai-suggestion-card"
-                                    style={{ padding: '1.1rem', borderRadius: '12px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 500, border: '1px solid var(--border)', transition: 'all 0.2s' }}
-                                >
-                                    {suggestionButtons[0]}
-                                </motion.div>
-                                <motion.div
-                                    whileHover={{ scale: 1.02, background: 'var(--bg-input)', borderColor: 'var(--primary)' }}
-                                    className="glass-panel ai-suggestion-card"
-                                    style={{ padding: '1.1rem', borderRadius: '12px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 500, border: '1px solid var(--border)', transition: 'all 0.2s' }}
-                                >
-                                    {suggestionButtons[1]}
-                                </motion.div>
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: '0.75rem',
+                                    width: '100%',
+                                    maxWidth: '700px'
+                                }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', width: '100%' }}>
+                                        {suggestionButtons.map((btn, i) => (
+                                            <motion.div
+                                                key={i}
+                                                onClick={() => handleSend(btn)}
+                                                whileHover={{ scale: 1.02, background: 'var(--bg-input)', borderColor: 'var(--primary)' }}
+                                                className="glass-panel"
+                                                style={{ padding: '1.1rem', borderRadius: '12px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 500, border: '1px solid var(--border)', transition: 'all 0.2s' }}
+                                            >
+                                                {btn}
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
-                            <motion.div
-                                whileHover={{ scale: 1.02, background: 'var(--bg-input)', borderColor: 'var(--primary)' }}
-                                className="glass-panel ai-suggestion-card"
-                                style={{ padding: '1.1rem', borderRadius: '12px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 500, width: 'calc(50% - 0.375rem)', border: '1px solid var(--border)', transition: 'all 0.2s' }}
-                            >
-                                {suggestionButtons[2]}
-                            </motion.div>
-                        </div>
+                        )}
+
+                        {(!isLoadingHistory && (messages.length > 1 || messages[0].id !== 'welcome')) && messages.map((msg) => (
+                            <div key={msg.id} style={{ display: 'flex', gap: '1rem', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                                {msg.role === 'assistant' && (
+                                    <div style={{ width: '36px', height: '36px', background: 'var(--primary)', borderRadius: '10px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <MessageSquare size={18} color="white" />
+                                    </div>
+                                )}
+                                <div style={{
+                                    background: msg.role === 'user' ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
+                                    padding: '1rem 1.25rem',
+                                    borderRadius: msg.role === 'user' ? '16px 16px 0 16px' : '0 16px 16px 16px',
+                                    fontSize: '1rem',
+                                    lineHeight: 1.6,
+                                    maxWidth: '80%',
+                                    color: msg.role === 'user' ? 'white' : 'var(--text-primary)',
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-word',
+                                    border: msg.role === 'assistant' ? '1px solid var(--border)' : 'none'
+                                }}>
+                                    {msg.text || (msg.streaming ? '...' : '')}
+                                </div>
+                            </div>
+                        ))}
+
+                        {isThinking && !streamingIdRef.current && (
+                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                <div style={{ width: '36px', height: '36px', background: 'var(--primary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Loader2 size={18} color="white" className="animate-spin" />
+                                </div>
+                                <div style={{ display: 'flex', gap: '4px', padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '0 16px 16px 16px', border: '1px solid var(--border)' }}>
+                                    {[0, 1, 2].map(i => (
+                                        <span key={i} style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--text-secondary)', animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Fixed Bottom Input Area */}
-                    <div className="ai-input-container" style={{
-                        position: 'absolute',
-                        bottom: '2rem',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        width: '100%',
+                    {/* Input Area */}
+                    <div style={{
+                        marginTop: 'auto',
+                        padding: '1.5rem 0',
                         maxWidth: '900px',
-                        padding: '0 1rem'
+                        width: '100%',
+                        margin: '0 auto'
                     }}>
                         <div style={{
                             background: 'var(--bg-input)',
-                            borderRadius: '20px',
-                            padding: '0.75rem',
+                            borderRadius: '24px',
+                            padding: '0.75rem 1rem',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '1rem',
-                            boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
                             border: '1px solid var(--border)'
                         }}>
-                            <div style={{
-                                padding: '0.6rem 0.8rem',
-                                background: 'rgba(255,255,255,0.05)',
-                                borderRadius: '12px',
-                                fontSize: '0.8rem',
-                                fontWeight: 700,
-                                color: 'var(--text-secondary)',
-                                cursor: 'pointer'
-                            }}>
-                                EN
-                            </div>
                             <Mic size={22} style={{ cursor: 'pointer', opacity: 0.6 }} />
                             <input
                                 type="text"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                                 placeholder="Message AtAssistant..."
                                 style={{
                                     flex: 1,
@@ -309,29 +434,45 @@ const AIAssistantPage = () => {
                                     outline: 'none',
                                     padding: '0.5rem'
                                 }}
+                                disabled={connectionStatus === 'disconnected'}
                             />
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                 <Volume2 size={22} style={{ cursor: 'pointer', opacity: 0.6 }} />
-                                <button style={{
-                                    width: '44px',
-                                    height: '44px',
-                                    background: 'var(--primary)',
-                                    border: 'none',
-                                    borderRadius: '14px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'white',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 8px 16px var(--primary-glow)'
-                                }}>
-                                    <Send size={20} />
+                                <button
+                                    onClick={() => handleSend()}
+                                    disabled={isThinking || !input.trim() || connectionStatus === 'disconnected'}
+                                    style={{
+                                        width: '44px',
+                                        height: '44px',
+                                        background: isThinking || !input.trim() ? 'rgba(255,91,4,0.4)' : 'var(--primary)',
+                                        border: 'none',
+                                        borderRadius: '14px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
+                                        cursor: isThinking || !input.trim() ? 'not-allowed' : 'pointer',
+                                        boxShadow: '0 8px 16px var(--primary-glow)',
+                                        transition: 'background 0.2s'
+                                    }}
+                                >
+                                    {isThinking ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
                                 </button>
                             </div>
                         </div>
+                        {connectionStatus === 'disconnected' && (
+                            <p style={{ textAlign: 'center', color: '#ef4444', fontSize: '0.8rem', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                <WifiOff size={14} /> Backend offline — start the NestJS server on port 3001
+                            </p>
+                        )}
                     </div>
                 </main>
             </div>
+            <style>{`
+                @keyframes bounce { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+                .animate-spin { animation: spin 1s linear infinite }
+                @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+            `}</style>
         </div>
     );
 };

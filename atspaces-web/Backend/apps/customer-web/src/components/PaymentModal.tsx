@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CreditCard, Loader2, CheckCircle2 } from 'lucide-react';
+import { bookingService } from '../services/booking.service';
 
 const AppleLogo = ({ size = 20, color = 'white' }: { size?: number; color?: string }) => (
     <svg width={size} height={size} viewBox="0 0 814 1000" fill={color}>
@@ -17,6 +18,8 @@ interface PaymentModalProps {
     date: string;
     startTime: string;
     duration: number;
+    branchId: number;
+    serviceId: number;
 }
 
 export interface BookingDetails {
@@ -28,7 +31,7 @@ export interface BookingDetails {
     paymentMethod: string;
 }
 
-const PaymentModal = ({ isOpen, onClose, onSuccess, spaceName, price, date, startTime, duration }: PaymentModalProps) => {
+const PaymentModal = ({ isOpen, onClose, onSuccess, spaceName, price, date, startTime, duration, branchId, serviceId }: PaymentModalProps) => {
     const [method, setMethod] = useState<'apple' | 'card' | null>(null);
     const [cardNumber, setCardNumber] = useState('');
     const [expiry, setExpiry] = useState('');
@@ -49,7 +52,7 @@ const PaymentModal = ({ isOpen, onClose, onSuccess, spaceName, price, date, star
         return digits;
     };
 
-    const handlePay = () => {
+    const handlePay = async () => {
         if (method === 'card') {
             if (cardNumber.replace(/\s/g, '').length < 16) {
                 setError('Please enter a valid card number.');
@@ -72,8 +75,20 @@ const PaymentModal = ({ isOpen, onClose, onSuccess, spaceName, price, date, star
         setError('');
         setLoading(true);
 
-        // Simulate payment processing
-        setTimeout(() => {
+        try {
+            // Call the real booking service
+            const bookingData = {
+                branchId,
+                serviceId,
+                date,
+                startTime,
+                duration,
+                totalPrice: total,
+                paymentMethod: method === 'apple' ? 'APPLE_PAY' : 'CARD'
+            };
+
+            await bookingService.createBooking(bookingData);
+
             setLoading(false);
             onSuccess({
                 spaceName,
@@ -83,7 +98,11 @@ const PaymentModal = ({ isOpen, onClose, onSuccess, spaceName, price, date, star
                 total,
                 paymentMethod: method === 'apple' ? 'Apple Pay' : 'Visa/MasterCard'
             });
-        }, 2000);
+        } catch (err: any) {
+            console.error("Booking failed", err);
+            setError(err.response?.data?.message || 'Failed to complete booking. Please try again.');
+            setLoading(false);
+        }
     };
 
     const inputStyle: React.CSSProperties = {

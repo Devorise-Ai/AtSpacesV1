@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { IApprovalRequestRepository } from '../../domain/interfaces/approval-request-repository.interface';
+import type { IApprovalRequestRepository, EnrichedApprovalRequest } from '../../domain/interfaces/approval-request-repository.interface';
 import type { IVendorServiceRepository } from '../../domain/interfaces/vendor-service-repository.interface';
 import type { IAuditService } from '../interfaces/services/audit-service.interface';
 import { ApprovalRequest } from '../../domain/entities/approval-request.entity';
@@ -59,7 +59,7 @@ export class ApprovalRequestService {
         await this.approvalRequestRepository.save(request);
     }
 
-    async getPendingRequests(): Promise<ApprovalRequest[]> {
+    async getPendingRequests(): Promise<EnrichedApprovalRequest[]> {
         return this.approvalRequestRepository.findByStatus(ApprovalStatus.PENDING);
     }
 }

@@ -33,6 +33,20 @@ export class PrismaBookingRepository implements IBookingRepository {
         return bookings.map(b => this.mapPrismaToEntity(b));
     }
 
+    async findByVendor(vendorId: number): Promise<Booking[]> {
+        const bookings = await this.prisma.booking.findMany({
+            where: {
+                vendorService: {
+                    branch: {
+                        vendorId: vendorId
+                    }
+                }
+            },
+            orderBy: { startTime: 'asc' }
+        });
+        return bookings.map(b => this.mapPrismaToEntity(b));
+    }
+
     async save(booking: Booking): Promise<void> {
         await this.prisma.booking.upsert({
             where: { id: booking.id || 0 }, // If id is 0 or undefined, it's a new booking

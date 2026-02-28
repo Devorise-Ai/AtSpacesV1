@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { AiContextService } from '../../application/services/ai-context.service';
 import { EmailService } from './email.service';
+import * as jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
@@ -178,33 +179,93 @@ export class AgentService {
         this.logger.log("LangGraph React Agent Initialized.");
     }
 
+    private verifyToken(token: string): any {
+        try {
+            const secret = process.env.JWT_SECRET || 'atspaces-super-secret-key-change-this-in-production';
+            return jwt.verify(token, secret);
+        } catch (error) {
+            console.error('AgentService Token verification failed:', error);
+            return null;
+        }
+    }
+
     /**
      * Exposes a streaming method that WebSockets will consume
      */
-    async *streamChat(sessionId: string, humanMessage: string) {
+    async *streamChat(sessionId: string, humanMessage: string, token?: string) {
+        let userId: number | null = null;
+
+        if (token) {
+            const payload = this.verifyToken(token);
+            if (payload && (payload.sub || payload.id)) {
+                userId = payload.sub || payload.id;
+            }
+        }
+
+        // Save user message to DB if authenticated
+        if (userId) {
+            await prisma.aIChatMessage.create({
+                data: {
+                    userId,
+                    role: 'user',
+                    content: humanMessage
+                }
+            });
+        }
+
         // Build the system prompt using AiContextService
         const systemPrompt = this.aiContextService.getSystemPrompt();
         const baseContext = await this.aiContextService.getBaseContextPayload();
 
-        const fullSystemContext = `${systemPrompt}\n\n${baseContext}`;
+        let fullSystemContext = `${systemPrompt}\n\n${baseContext}`;
 
-        const inputs = {
-            messages: [
-                { role: "system", content: fullSystemContext },
-                { role: "user", content: humanMessage }
-            ]
-        };
+        const messages: { role: string, content: string }[] = [];
+        messages.push({ role: "system", content: fullSystemContext });
+
+        // Load DB History if authenticated (limiting to last 15 messages for context window)
+        if (userId) {
+            const history = await prisma.aIChatMessage.findMany({
+                where: { userId },
+                orderBy: { createdAt: 'desc' },
+                take: 15
+            });
+            // Reverse so they are chronological
+            history.reverse().forEach(msg => {
+                // Don't duplicate the current human message which was just inserted
+                if (msg.role === 'user' && msg.content === humanMessage) return;
+                messages.push({ role: msg.role === 'user' ? 'user' : 'assistant', content: msg.content });
+            });
+        }
+
+        messages.push({ role: "user", content: humanMessage });
+
+        const inputs = { messages };
 
         const config = { configurable: { thread_id: sessionId } };
 
         // We use streamEvents to capture both the final LLM tokens and tool calls if needed
         const stream = await this.agent.streamEvents(inputs, { ...config, version: "v2" });
 
+        let fullAssistantReply = "";
+
         for await (const event of stream) {
             // We only want to stream back the actual chat model generation chunks
             if (event.event === "on_chat_model_stream" && event.data.chunk.content) {
+                fullAssistantReply += event.data.chunk.content;
                 yield event.data.chunk.content;
             }
         }
+
+        // Save assistant reply to DB if authenticated
+        if (userId && fullAssistantReply) {
+            await prisma.aIChatMessage.create({
+                data: {
+                    userId,
+                    role: 'assistant',
+                    content: fullAssistantReply
+                }
+            });
+        }
     }
 }
+

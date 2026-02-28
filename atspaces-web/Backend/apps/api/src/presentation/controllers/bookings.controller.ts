@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards, ParseIntPipe, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CreateBookingDto } from '../../application/dtos/requests/create-booking.dto';
 import { BookingService } from '../../application/services/booking.service';
@@ -24,6 +24,19 @@ export class BookingsController {
     async getMyBookings(@Req() req: any) {
         const customerId = req.user?.id;
         return this.bookingService.findByCustomer(Number(customerId));
+    }
+
+    @Get('vendor')
+    async getVendorBookings(@Req() req: any) {
+        const userRole = req.user?.role;
+        const userId = req.user?.id;
+
+        // Only vendors and admins can access vendor bookings
+        if (userRole !== 'vendor' && userRole !== 'admin') {
+            throw new ForbiddenException('Only vendors and admins can access vendor bookings');
+        }
+
+        return this.bookingService.findByVendor(Number(userId));
     }
 
     @Patch(':id/cancel')

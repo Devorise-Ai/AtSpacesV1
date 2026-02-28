@@ -31,6 +31,7 @@ const customIcon = new L.DivIcon({
 
 interface Workspace {
     id: string;
+    branchId: number;
     title: string;
     location: string;
     rating: number;
@@ -50,10 +51,10 @@ const MapView = ({ workspaces }: MapViewProps) => {
         <div style={{ borderRadius: '20px', overflow: 'hidden', height: '600px', border: '1px solid var(--border)' }}>
             <MapContainer
                 center={[31.963, 35.890]}
-                zoom={13}
+                zoom={12}
                 style={{ height: '100%', width: '100%' }}
                 scrollWheelZoom={true}
-                zoomControl={false}
+                zoomControl={true}
             >
                 <TileLayer
                     attribution='&copy; <a href="https://carto.com/">CARTO</a>'
@@ -83,7 +84,7 @@ const MapView = ({ workspaces }: MapViewProps) => {
                                     <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem' }}>JOD {space.price}/hr</span>
                                 </div>
                                 <Link
-                                    to={`/workspaces/${space.id}`}
+                                    to={`/workspaces/${space.branchId}`}
                                     className="btn-primary"
                                     style={{
                                         display: 'block',

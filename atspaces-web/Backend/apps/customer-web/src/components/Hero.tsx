@@ -1,7 +1,20 @@
 import { Search, MapPin, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Hero = () => {
+    const [location, setLocation] = useState('');
+    const [dateTime, setDateTime] = useState('');
+    const navigate = useNavigate();
+
+    const handleSearch = () => {
+        const params = new URLSearchParams();
+        if (location.trim()) params.set('location', location.trim());
+        if (dateTime) params.set('date', dateTime);
+        navigate(`/workspaces${params.toString() ? '?' + params.toString() : ''}`);
+    };
+
     return (
         <section className="hero-section" style={{
             minHeight: '100vh',
@@ -80,18 +93,31 @@ const Hero = () => {
                         <input
                             type="text"
                             placeholder="Where do you want to work?"
+                            value={location}
+                            onChange={(e) => setLocation(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                             style={{ background: 'transparent', border: 'none', color: 'white', width: '100%', outline: 'none' }}
                         />
                     </div>
                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', padding: '12px' }}>
                         <Calendar size={20} color="var(--primary)" />
                         <input
-                            type="text"
-                            placeholder="Date & Time"
-                            style={{ background: 'transparent', border: 'none', color: 'white', width: '100%', outline: 'none' }}
+                            type="datetime-local"
+                            value={dateTime}
+                            onChange={(e) => setDateTime(e.target.value)}
+                            min={new Date().toISOString().slice(0, 16)}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: dateTime ? 'white' : 'var(--text-secondary)',
+                                width: '100%',
+                                outline: 'none',
+                                colorScheme: 'dark',
+                                cursor: 'pointer'
+                            }}
                         />
                     </div>
-                    <button className="btn-primary" style={{ padding: '16px' }}>
+                    <button className="btn-primary" onClick={handleSearch} style={{ padding: '16px' }}>
                         <Search size={18} />
                         Search
                     </button>

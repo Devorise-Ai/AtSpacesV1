@@ -7,7 +7,10 @@ export interface BranchWithDetails {
     description: string | null;
     city: string;
     address: string;
+    latitude: number | null;
+    longitude: number | null;
     status: string;
+    images: string[];
     createdAt: Date;
     vendorId: number;
     vendorServices: {
